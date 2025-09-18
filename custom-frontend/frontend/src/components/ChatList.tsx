@@ -135,7 +135,7 @@ export function ChatList() {
               {/* Content */}
               <div className="ml-3 flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-white text-xs font-semibold">{conversation.name}</h3>
+                  <h3 className="text-[#1F1D1D] dark:text-white text-xs font-semibold">{conversation.name}</h3>
                   {conversation.isPinned && (
                     <Pin size={16} className="text-white" />
                   )}
