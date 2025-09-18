@@ -141,7 +141,7 @@ export function ChatList() {
                   )}
                 </div>
                 <p className={`text-xs mt-1 ${
-                  conversation.isTyping ? "text-[#21FF5F]/93" : "text-[#767876]"
+                  conversation.isTyping ? "text-[#21FF5F]/93" : "text-[#767876] dark:text-[#767876]"
                 }`}>
                   {conversation.message}
                 </p>
