@@ -162,7 +162,7 @@ export function ChatList() {
       <div className="border-t border-[#312F2F] pt-4">
         {/* Calls Header */}
         <div className="px-4 mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Calls</h2>
+          <h2 className="text-xl font-semibold text-[#1F1D1D] dark:text-white">Calls</h2>
           <div className="flex items-center space-x-2">
             <button className="text-white hover:text-gray-300">
               <Plus size={20} />
