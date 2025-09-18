@@ -125,17 +125,17 @@ export function ChatArea() {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-auto p-6 bg-gradient-to-b from-transparent to-black/20"
+      <div className="flex-1 overflow-auto p-6 bg-white dark:bg-transparent"
            style={{
              backgroundImage: `url('https://api.builder.io/api/v1/image/assets/TEMP/d79401804ab20eac9fe139fc7f3803d02ac978cd?width=2730')`,
              backgroundSize: 'cover',
              backgroundPosition: 'center',
            }}>
-        <div className="bg-black/67 min-h-full p-6 rounded-lg">
+        <div className="bg-white/80 dark:bg-black/67 min-h-full p-6 rounded-lg">
           <div className="space-y-4">
             {/* Static demo messages */}
             {chatMessages.map((message) => renderStaticMessage(message))}
-            
+
             {/* Dynamic chat messages */}
             {flatMessages.map((message) => renderMessage(message))}
           </div>
