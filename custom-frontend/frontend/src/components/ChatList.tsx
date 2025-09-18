@@ -92,7 +92,7 @@ export function ChatList() {
 
         {/* Messages Header */}
         <div className="px-4 mb-4">
-          <h2 className="text-xl font-semibold text-white mb-2">Message</h2>
+          <h2 className="text-xl font-semibold text-[#1F1D1D] dark:text-white mb-2">Message</h2>
           
           {/* Chat Tabs */}
           <div className="relative">
