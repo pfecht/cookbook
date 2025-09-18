@@ -100,26 +100,26 @@ export function ChatArea() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Chat Header */}
-      <div className="h-24 bg-[#1F1D1D] border-b border-[#312F2F] px-6 flex items-center justify-between">
-        <div className="flex items-center">
+      <div className="h-16 md:h-24 bg-[#1F1D1D] border-b border-[#312F2F] px-4 md:px-6 flex items-center justify-between">
+        <div className="flex items-center min-w-0">
           <img
             src="https://api.builder.io/api/v1/image/assets/TEMP/f4a9ea3781c159d469853a087aef78fe4a5379f9?width=114"
             alt="Darshan Zalavadiya"
-            className="w-12 h-12 rounded-full object-cover"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0"
           />
-          <div className="ml-4">
-            <h1 className="text-xl font-semibold text-white">Darshan Zalavadiya</h1>
-            <p className="text-lg font-semibold text-[#21FF5F]/99">Online</p>
+          <div className="ml-3 md:ml-4 min-w-0">
+            <h1 className="text-lg md:text-xl font-semibold text-white truncate">Darshan Zalavadiya</h1>
+            <p className="text-sm md:text-lg font-semibold text-[#21FF5F]/99">Online</p>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <p className="text-lg font-semibold text-white/80">Today, 9:30 am</p>
+
+        <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+          <p className="hidden md:block text-lg font-semibold text-white/80">Today, 9:30 am</p>
           <button className="text-white hover:text-gray-300">
-            <Video size={24} />
+            <Video size={20} className="md:w-6 md:h-6" />
           </button>
           <button className="text-white hover:text-gray-300">
-            <Phone size={24} />
+            <Phone size={20} className="md:w-6 md:h-6" />
           </button>
         </div>
       </div>
