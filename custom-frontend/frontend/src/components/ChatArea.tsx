@@ -87,9 +87,9 @@ export function ChatArea() {
     return (
       <div key={message.id} className={`flex mb-4 ${isUser ? "justify-end" : "justify-start"}`}>
         <div className={`max-w-xs lg:max-w-md px-6 py-2 rounded-3xl ${
-          isUser 
-            ? "bg-[#312F2F] text-white ml-auto" 
-            : "bg-[#312F2F] text-white mr-auto"
+          isUser
+            ? "bg-gray-200 text-black dark:bg-[#312F2F] dark:text-white ml-auto"
+            : "bg-gray-200 text-black dark:bg-[#312F2F] dark:text-white mr-auto"
         }`}>
           <p className="text-lg font-semibold">{message.content}</p>
         </div>
