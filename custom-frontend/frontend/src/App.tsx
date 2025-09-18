@@ -1,32 +1,50 @@
-import { useEffect } from "react";
-
-import { sessionState, useChatSession } from "@chainlit/react-client";
-import { Playground } from "./components/playground";
+import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
+import { sessionState, useChatSession } from "@chainlit/react-client";
+
+import { MainShell, Page } from "./components/MainShell";
+import { ChatList } from "./components/ChatList";
+import { ChatArea } from "./components/ChatArea";
+import { SettingsPage } from "./pages/SettingsPage";
+import { RadarPage } from "./pages/RadarPage";
 
 const userEnv = {};
 
 function App() {
+  const [page, setPage] = useState<Page>("chat");
+
   const { connect } = useChatSession();
   const session = useRecoilValue(sessionState);
+
   useEffect(() => {
-    if (session?.socket.connected) {
-      return;
-    }
-    fetch("http://localhost:80/custom-auth", {credentials: "include"})
-      .then(() => {
-        connect({
-          userEnv
-        });
-      });
-  }, [connect]);
+    if (session?.socket.connected) return;
+    fetch("http://localhost:80/custom-auth", { credentials: "include" }).then(
+      () => {
+        connect({ userEnv });
+      }
+    );
+  }, [connect, session?.socket.connected]);
+
+  if (page === "chat") {
+    return (
+      <MainShell activePage={page} onNavigate={setPage} leftPanel={<ChatList />}>
+        <ChatArea />
+      </MainShell>
+    );
+  }
+
+  if (page === "radar") {
+    return (
+      <MainShell activePage={page} onNavigate={setPage}>
+        <RadarPage />
+      </MainShell>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <Playground />
-      </div>
-    </>
+    <MainShell activePage={page} onNavigate={setPage}>
+      <SettingsPage />
+    </MainShell>
   );
 }
 
