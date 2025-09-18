@@ -176,7 +176,7 @@ export function ChatList() {
           {callsList.map((call) => (
             <div
               key={call.id}
-              className="flex items-center p-3 bg-[#312F2F] rounded-lg hover:bg-[#3a3737] transition-colors cursor-pointer"
+              className="flex items-center p-3 bg-gray-200 dark:bg-[#312F2F] rounded-lg hover:bg-gray-300 dark:hover:bg-[#3a3737] transition-colors cursor-pointer"
             >
               {/* Avatar */}
               <div className="relative">
@@ -185,14 +185,14 @@ export function ChatList() {
                   alt={call.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />
-                <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#00FF38] rounded-full border-2 border-[#312F2F]"></div>
+                <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#00FF38] rounded-full border-2 border-gray-200 dark:border-[#312F2F]"></div>
               </div>
 
               {/* Content */}
               <div className="ml-3 flex-1">
-                <h3 className="text-white text-xs font-semibold">{call.name}</h3>
+                <h3 className="text-[#1F1D1D] dark:text-white text-xs font-semibold">{call.name}</h3>
                 <p className={`text-xs mt-1 ${
-                  call.isOngoing ? "text-[#21FF5F]/93" : "text-[#767876]"
+                  call.isOngoing ? "text-[#21FF5F]/93" : "text-[#767876] dark:text-[#767876]"
                 }`}>
                   {call.status}
                 </p>
@@ -200,10 +200,10 @@ export function ChatList() {
 
               {/* Call Actions */}
               <div className="flex space-x-2">
-                <button className="text-white hover:text-gray-300">
+                <button className="text-[#1F1D1D] dark:text-white hover:text-gray-700 dark:hover:text-gray-300">
                   <Video size={20} />
                 </button>
-                <button className="text-white hover:text-gray-300">
+                <button className="text-[#1F1D1D] dark:text-white hover:text-gray-700 dark:hover:text-gray-300">
                   <Phone size={20} />
                 </button>
               </div>
