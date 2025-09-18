@@ -85,7 +85,7 @@ export function ChatList() {
             <input
               type="text"
               placeholder="Search......."
-              className="w-full pl-10 pr-4 py-2.5 bg-[#543639]/48 rounded-full border-none outline-none text-white/60 text-xs placeholder-white/60"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#543639]/48 rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
             />
           </div>
         </div>
