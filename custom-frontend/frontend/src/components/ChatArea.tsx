@@ -143,15 +143,15 @@ export function ChatArea() {
       </div>
 
       {/* Message Input */}
-      <div className="p-6 bg-[#1F1D1D]">
-        <div className="flex items-center space-x-4">
+      <div className="p-4 md:p-6 bg-[#1F1D1D]">
+        <div className="flex items-center space-x-2 md:space-x-4">
           {/* Message Input Container */}
           <div className="flex-1 relative">
-            <div className="flex items-center bg-[#312F2F] rounded-3xl px-4 py-3">
-              <button className="text-white hover:text-gray-300 mr-3">
-                <Smile size={24} />
+            <div className="flex items-center bg-[#312F2F] rounded-3xl px-3 md:px-4 py-3">
+              <button className="text-white hover:text-gray-300 mr-2 md:mr-3">
+                <Smile size={20} className="md:w-6 md:h-6" />
               </button>
-              
+
               <input
                 type="text"
                 placeholder="Message........."
@@ -162,10 +162,10 @@ export function ChatArea() {
                     handleSendMessage();
                   }
                 }}
-                className="flex-1 bg-transparent text-white placeholder-white/40 text-lg font-semibold outline-none"
+                className="flex-1 bg-transparent text-white placeholder-white/40 text-base md:text-lg font-semibold outline-none"
               />
-              
-              <div className="flex items-center space-x-3 ml-3">
+
+              <div className="hidden md:flex items-center space-x-3 ml-3">
                 <button className="text-white hover:text-gray-300">
                   <Paperclip size={20} />
                 </button>
@@ -180,11 +180,11 @@ export function ChatArea() {
           </div>
 
           {/* Voice Message Button */}
-          <button 
+          <button
             onClick={handleSendMessage}
-            className="w-15 h-15 bg-[#312F2F] rounded-full flex items-center justify-center text-white hover:bg-[#3a3737] transition-colors"
+            className="w-12 h-12 md:w-15 md:h-15 bg-[#312F2F] rounded-full flex items-center justify-center text-white hover:bg-[#3a3737] transition-colors"
           >
-            <Mic size={20} />
+            <Mic size={18} className="md:w-5 md:h-5" />
           </button>
         </div>
       </div>
