@@ -118,7 +118,7 @@ export function ChatList() {
           {conversations.map((conversation) => (
             <div
               key={conversation.id}
-              className="flex items-center p-3 bg-[#312F2F] rounded-lg hover:bg-[#3a3737] transition-colors cursor-pointer relative"
+              className="flex items-center p-3 bg-gray-200 dark:bg-[#312F2F] rounded-lg hover:bg-gray-300 dark:hover:bg-[#3a3737] transition-colors cursor-pointer relative"
             >
               {/* Avatar */}
               <div className="relative">
