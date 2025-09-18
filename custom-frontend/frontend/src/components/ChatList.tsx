@@ -73,7 +73,7 @@ export function ChatList() {
   ];
 
   return (
-    <div className="w-80 md:w-80 lg:w-96 bg-[#1F1D1D] flex flex-col border-r border-[#312F2F]">
+    <div className="w-80 md:w-80 lg:w-96 bg-white dark:bg-[#1F1D1D] flex flex-col border-r border-black/10 dark:border-[#312F2F]">
       {/* Top Section - Messages */}
       <div className="flex-1">
         {/* Search Bar */}
