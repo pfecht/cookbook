@@ -98,9 +98,9 @@ export function ChatArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col bg-white dark:bg-transparent">
       {/* Chat Header */}
-      <div className="h-16 md:h-24 bg-[#1F1D1D] border-b border-[#312F2F] px-4 md:px-6 flex items-center justify-between">
+      <div className="h-16 md:h-24 bg-white dark:bg-[#1F1D1D] border-b border-black/10 dark:border-[#312F2F] px-4 md:px-6 flex items-center justify-between">
         <div className="flex items-center min-w-0">
           <img
             src="https://api.builder.io/api/v1/image/assets/TEMP/f4a9ea3781c159d469853a087aef78fe4a5379f9?width=114"
