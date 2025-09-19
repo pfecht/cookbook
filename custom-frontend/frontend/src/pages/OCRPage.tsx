@@ -464,7 +464,7 @@ export function OCRPage() {
                     )}
 
                     <div className="mt-4 grid grid-cols-3 gap-2">
-                      <button onClick={() => openEditor(t.id)} className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); openEditor(t.id); }} className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2">
                         <Edit size={16} /> Edit fields
                       </button>
                       <button
