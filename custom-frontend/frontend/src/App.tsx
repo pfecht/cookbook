@@ -15,6 +15,7 @@ const userEnv = {};
 function App() {
   const [page, setPage] = useState<Page>("chat");
   const [docDetail, setDocDetail] = useState<DocTypeDef | null>(null);
+  const [detailEditTypeId, setDetailEditTypeId] = useState<string | null>(null);
 
   const { connect } = useChatSession();
   const session = useRecoilValue(sessionState);
@@ -36,9 +37,20 @@ function App() {
     return (
       <MainShell activePage={page} onNavigate={setPage}>
         {docDetail ? (
-          <OCRDetailPage typeDef={docDetail} onBack={() => setDocDetail(null)} />
+          <OCRDetailPage
+            typeDef={docDetail}
+            onBack={() => setDocDetail(null)}
+            onEdit={(id) => {
+              setDocDetail(null);
+              setDetailEditTypeId(id);
+            }}
+          />
         ) : (
-          <OCRPage onOpenDetail={(t) => setDocDetail(t)} />
+          <OCRPage
+            onOpenDetail={(t) => setDocDetail(t)}
+            openEditorForTypeId={detailEditTypeId}
+            onEditorOpenHandled={() => setDetailEditTypeId(null)}
+          />
         )}
       </MainShell>
     );
