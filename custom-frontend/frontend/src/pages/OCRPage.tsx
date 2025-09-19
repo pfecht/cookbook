@@ -51,6 +51,7 @@ type DocTypeDef = {
   prompt: string;
   fields: FieldDef[];
   items: ArchiveItem[];
+  weeklySuccess: number[];
 };
 
 type ExtractedField = { key: string; value: string; confidence: number };
