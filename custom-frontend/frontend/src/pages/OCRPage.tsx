@@ -429,7 +429,7 @@ export function OCRPage() {
                         <div className="text-xs text-[#767876]">{t.fields.length} fields • {t.items.length} docs</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button title="Delete type" className="text-red-400 hover:text-red-300" onClick={() => deleteDocType(t.id)}>
+                        <button title="Delete type" className="text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); deleteDocType(t.id); }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
