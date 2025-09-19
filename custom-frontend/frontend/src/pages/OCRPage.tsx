@@ -828,19 +828,27 @@ function TypeEditor({
 
       <div>
         <div className="text-xs text-[#767876] mb-2">Fields</div>
-        <div className="space-y-2">
+        <div className="rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] divide-y divide-black/10 dark:divide-[#312F2F]">
+          <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs text-[#767876]">
+            <div className="col-span-3">Field name</div>
+            <div className="col-span-2">Type</div>
+            <div className="col-span-3">Description</div>
+            <div className="col-span-2">Enum (string)</div>
+            <div className="col-span-1">Required</div>
+            <div className="col-span-1 text-right">Actions</div>
+          </div>
           {typeDef.fields.map((f, i) => (
-            <div key={`${f.name}-${i}`} className="p-3 rounded-lg bg-gray-200 dark:bg-[#312F2F] grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
+            <div key={`${f.name}-${i}`} className="grid grid-cols-12 gap-2 px-4 py-3 items-center">
               <input
                 value={f.name}
                 onChange={(e) => onUpdateField(i, { name: e.target.value })}
                 placeholder="Field name"
-                className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                className="col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               />
               <select
                 value={f.type}
                 onChange={(e) => onUpdateField(i, { type: e.target.value as FieldType })}
-                className="px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                className="col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               >
                 <option value="string">{TYPE_LABELS.string}</option>
                 <option value="number">{TYPE_LABELS.number}</option>
@@ -851,67 +859,71 @@ function TypeEditor({
                 value={f.description || ""}
                 onChange={(e) => onUpdateField(i, { description: e.target.value })}
                 placeholder="Description"
-                className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                className="col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               />
-              <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={f.required} onChange={(e) => onUpdateField(i, { required: e.target.checked })} />
-                Required
-              </label>
-              {f.type === "string" && (
+              {f.type === "string" ? (
                 <input
                   value={(f.enum || []).join(", ")}
                   onChange={(e) => onUpdateField(i, { enum: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
                   placeholder="Enum (comma-separated)"
-                  className="md:col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                  className="col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
                 />
+              ) : (
+                <div className="col-span-2" />
               )}
-              <div className="md:col-span-1 flex justify-end">
+              <label className="col-span-1 flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={f.required} onChange={(e) => onUpdateField(i, { required: e.target.checked })} />
+                <span>Required</span>
+              </label>
+              <div className="col-span-1 flex justify-end">
                 <button className="text-red-400" onClick={() => onRemoveField(i)}>
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Add field row */}
-        <div className="mt-3 p-3 rounded-lg bg-gray-200 dark:bg-[#312F2F] grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
-          <input
-            value={draft.name}
-            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            placeholder="Field name"
-            className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
-          />
-          <select
-            value={draft.type}
-            onChange={(e) => setDraft({ ...draft, type: e.target.value as FieldType })}
-            className="px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
-          >
-            <option value="string">{TYPE_LABELS.string}</option>
-            <option value="number">{TYPE_LABELS.number}</option>
-            <option value="integer">{TYPE_LABELS.integer}</option>
-            <option value="boolean">{TYPE_LABELS.boolean}</option>
-          </select>
-          <input
-            value={draft.description}
-            onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-            placeholder="Description"
-            className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
-          />
-          <label className="flex items-center gap-2 text-xs">
-            <input type="checkbox" checked={draft.required} onChange={(e) => setDraft({ ...draft, required: e.target.checked })} />
-            Required
-          </label>
-          <input
-            value={draft.enumText}
-            onChange={(e) => setDraft({ ...draft, enumText: e.target.value })}
-            placeholder="Enum (comma-separated)"
-            className="md:col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
-          />
-          <div className="md:col-span-1 flex justify-end">
-            <button onClick={() => onAddField(draft)} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
-              <Plus size={16} /> Add
-            </button>
+          <div className="grid grid-cols-12 gap-2 px-4 py-3 items-center">
+            <input
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              placeholder="Field name"
+              className="col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+            />
+            <select
+              value={draft.type}
+              onChange={(e) => setDraft({ ...draft, type: e.target.value as FieldType })}
+              className="col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+            >
+              <option value="string">{TYPE_LABELS.string}</option>
+              <option value="number">{TYPE_LABELS.number}</option>
+              <option value="integer">{TYPE_LABELS.integer}</option>
+              <option value="boolean">{TYPE_LABELS.boolean}</option>
+            </select>
+            <input
+              value={draft.description}
+              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+              placeholder="Description"
+              className="col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+            />
+            {draft.type === "string" ? (
+              <input
+                value={draft.enumText}
+                onChange={(e) => setDraft({ ...draft, enumText: e.target.value })}
+                placeholder="Enum (comma-separated)"
+                className="col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+              />
+            ) : (
+              <div className="col-span-2" />
+            )}
+            <label className="col-span-1 flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={draft.required} onChange={(e) => setDraft({ ...draft, required: e.target.checked })} />
+              <span>Required</span>
+            </label>
+            <div className="col-span-1 flex justify-end">
+              <button onClick={() => onAddField(draft)} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
+                <Plus size={16} /> Add
+              </button>
+            </div>
           </div>
         </div>
       </div>
