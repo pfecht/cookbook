@@ -516,7 +516,7 @@ export function OCRPage() {
                 const items = filteredItems(t);
                 const success = percentForQuality(items);
                 return (
-                  <div key={t.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center">
+                  <div key={t.id} onClick={() => { setSelectedTypeId(t.id); setStep("detail"); }} className="grid grid-cols-12 gap-2 px-4 py-3 items-center cursor-pointer hover:bg-gray-100/50 dark:hover:bg-[#312F2F]/50">
                     <div className="col-span-4">
                       <div className="font-semibold text-sm">{t.name}</div>
                       <div className="text-[11px] text-[#767876] line-clamp-1">{t.prompt || "No prompt"}</div>
