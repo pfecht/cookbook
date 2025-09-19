@@ -374,7 +374,7 @@ export function OCRPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-gray-100 dark:bg-[#312F2F] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="rounded-2xl bg-transparent p-2 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
                 <Filter size={18} />
