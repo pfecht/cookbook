@@ -28,6 +28,13 @@ type ArchiveItem = {
 
 type FieldType = "string" | "number" | "integer" | "boolean";
 
+const TYPE_LABELS: Record<FieldType, string> = {
+  string: "Text",
+  number: "Number",
+  integer: "Whole number",
+  boolean: "Yes/No",
+};
+
 type FieldDef = {
   name: string;
   type: FieldType;
@@ -138,13 +145,7 @@ export function OCRPage() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [extracted, setExtracted] = useState<ExtractedField[]>([]);
 
-  const [showTypeModal, setShowTypeModal] = useState(false);
-  const [modalTypeId, setModalTypeId] = useState<string | null>(null);
-  const [newTypeName, setNewTypeName] = useState("");
-  const [newTypePrompt, setNewTypePrompt] = useState("");
-  const [fieldDraft, setFieldDraft] = useState<{ name: string; type: FieldType; required: boolean; description: string; enumText: string }>({ name: "", type: "string", required: true, description: "", enumText: "" });
-  const [search, setSearch] = useState("");
-  const [qualityFilter, setQualityFilter] = useState<DocQuality | "All">("All");
+  const [editorTypeId, setEditorTypeId] = useState<string | null>(null);
 
   const selectedType = useMemo(
     () => docTypes.find((t) => t.id === selectedTypeId) || docTypes[0],
@@ -217,80 +218,66 @@ export function OCRPage() {
     setExtracted([]);
   };
 
-  const addDocType = () => {
-    const name = newTypeName.trim();
-    if (!name) return;
-    const id = name.toLowerCase().replace(/\s+/g, "-");
-    if (docTypes.some((d) => d.id === id)) return;
-    setDocTypes((p) => [{ id, name, prompt: newTypePrompt.trim(), fields: [], items: [] }, ...p]);
-    setNewTypeName("");
-    setNewTypePrompt("");
-    setModalTypeId(id);
+  const addNewType = () => {
+    const id = `type-${Date.now()}`;
+    const next: DocTypeDef = { id, name: "New type", prompt: "", fields: [], items: [] };
+    setDocTypes((p) => [next, ...p]);
+    setEditorTypeId(id);
   };
 
   const deleteDocType = (id: string) => {
     if (docTypes.length <= 1) return;
     setDocTypes((p) => p.filter((d) => d.id !== id));
     if (selectedTypeId === id && docTypes[0]) setSelectedTypeId(docTypes[0].id);
+    if (editorTypeId === id) setEditorTypeId(null);
   };
 
-  const openEditFields = (id: string) => {
-    setModalTypeId(id);
-    setShowTypeModal(true);
+  const openEditor = (id: string) => setEditorTypeId(id);
+  const closeEditor = () => setEditorTypeId(null);
+
+  const updateType = (id: string, patch: Partial<DocTypeDef>) => {
+    setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   };
 
-  const addFieldToType = () => {
-    if (!modalTypeId) return;
-    const name = fieldDraft.name.trim();
+  const updateFieldAt = (id: string, index: number, patch: Partial<FieldDef>) => {
+    setDocTypes((p) =>
+      p.map((t) =>
+        t.id === id
+          ? { ...t, fields: t.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)) }
+          : t
+      )
+    );
+  };
+
+  const addFieldToType = (id: string, draft: { name: string; type: FieldType; required: boolean; description: string; enumText: string }) => {
+    const name = draft.name.trim();
     if (!name) return;
     setDocTypes((p) =>
       p.map((t) =>
-        t.id === modalTypeId && !t.fields.find((f) => f.name === name)
+        t.id === id && !t.fields.find((f) => f.name === name)
           ? {
               ...t,
               fields: [
                 ...t.fields,
                 {
                   name,
-                  type: fieldDraft.type,
-                  required: fieldDraft.required,
-                  description: fieldDraft.description.trim() || undefined,
-                  enum: fieldDraft.enumText
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
+                  type: draft.type,
+                  required: draft.required,
+                  description: draft.description.trim() || undefined,
+                  enum:
+                    draft.type === "string"
+                      ? draft.enumText.split(",").map((s) => s.trim()).filter(Boolean)
+                      : undefined,
                 },
               ],
             }
           : t
       )
     );
-    setFieldDraft({ name: "", type: "string", required: true, description: "", enumText: "" });
   };
 
-  const updateFieldAt = (index: number, patch: Partial<FieldDef>) => {
-    if (!modalTypeId) return;
-    setDocTypes((p) =>
-      p.map((t) =>
-        t.id === modalTypeId
-          ? {
-              ...t,
-              fields: t.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)),
-            }
-          : t
-      )
-    );
-  };
-
-  const removeFieldAt = (index: number) => {
-    if (!modalTypeId) return;
-    setDocTypes((p) =>
-      p.map((t) => (t.id === modalTypeId ? { ...t, fields: t.fields.filter((_, i) => i !== index) } : t))
-    );
-  };
-
-  const updatePrompt = (id: string, prompt: string) => {
-    setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, prompt } : t)));
+  const removeFieldAt = (id: string, index: number) => {
+    setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, fields: t.fields.filter((_, i) => i !== index) } : t)));
   };
 
   const filteredItems = (t: DocTypeDef) =>
@@ -306,6 +293,9 @@ export function OCRPage() {
       return textMatch && qMatch;
     });
 
+  const [search, setSearch] = useState("");
+  const [qualityFilter, setQualityFilter] = useState<DocQuality | "All">("All");
+
   return (
     <div className="h-full bg-white dark:bg-[#1F1D1D] text-[#1F1D1D] dark:text-white flex flex-col">
       {/* Header */}
@@ -320,22 +310,14 @@ export function OCRPage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => {
-              setNewTypeName("");
-              setNewTypePrompt("");
-              setModalTypeId(null);
-              setShowTypeModal(true);
-            }}
-            className="px-3 py-2 text-xs rounded-full bg-gray-200 dark:bg-[#312F2F] flex items-center space-x-2"
-          >
+          <button onClick={addNewType} className="px-3 py-2 text-xs rounded-full bg-gray-200 dark:bg-[#312F2F] flex items-center space-x-2">
             <Plus size={16} />
             <span>New Type</span>
           </button>
         </div>
       </div>
 
-      {/* Prominent Upload Bar */}
+      {/* Type select + Upload */}
       <div className="p-4 border-b border-black/10 dark:border-[#312F2F]">
         <div className="rounded-2xl bg-gray-200 dark:bg-[#312F2F] p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="flex items-center gap-2">
@@ -365,17 +347,18 @@ export function OCRPage() {
               };
               el.click();
             }}
-            className="w-full md:w-auto px-5 py-3 rounded-full bg-[#00FF38] text-black font-semibold flex items-center justify-center gap-2"
+            className="w-full md:w-auto px-5 py-3 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2"
           >
             <Upload size={16} /> Upload document
           </button>
         </div>
       </div>
 
-      {/* Dashboard: cards per document type (Overview + Archive merged) */}
-      {step === "dashboard" && (
-        <div className="flex-1 overflow-auto p-4 space-y-4">
-          {/* Filters for recent items */}
+      {/* Content area with optional split editor */}
+      <div className="flex-1 min-h-0 flex">
+        {/* Main content */}
+        <div className={`flex-1 overflow-auto p-4 space-y-4 ${editorTypeId ? "hidden lg:block" : "block"}`}>
+          {/* Filters */}
           <div className="rounded-2xl bg-gray-200 dark:bg-[#312F2F] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -413,15 +396,7 @@ export function OCRPage() {
             {/* Add card */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F] border border-dashed border-black/20 dark:border-black/40 flex items-center justify-center">
               <div className="text-center">
-                <button
-                  onClick={() => {
-                    setNewTypeName("");
-                    setNewTypePrompt("");
-                    setModalTypeId(null);
-                    setShowTypeModal(true);
-                  }}
-                  className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2"
-                >
+                <button onClick={addNewType} className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
                   <Plus size={16} /> Add document type
                 </button>
               </div>
@@ -430,7 +405,6 @@ export function OCRPage() {
             {docTypes.map((t) => {
               const items = filteredItems(t);
               const success = percentForQuality(items);
-              const schemaPreview = JSON.stringify(schemaFromFields(t.fields), null, 2);
               return (
                 <div key={t.id} className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
                   <div className="flex items-start justify-between">
@@ -439,11 +413,7 @@ export function OCRPage() {
                       <div className="text-xs text-[#767876]">{t.fields.length} fields • {t.items.length} docs</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        title="Delete type"
-                        className="text-red-400 hover:text-red-300"
-                        onClick={() => deleteDocType(t.id)}
-                      >
+                      <button title="Delete type" className="text-red-400 hover:text-red-300" onClick={() => deleteDocType(t.id)}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -455,40 +425,21 @@ export function OCRPage() {
                     <div className="px-2 py-1 rounded-full text-xs bg-red-400 text-white">{items.filter((i) => i.quality === "Needs Review").length} review</div>
                   </div>
 
-                  {t.prompt ? (
-                    <div className="mt-3 text-xs text-[#767876] line-clamp-2">{t.prompt}</div>
-                  ) : (
-                    <div className="mt-3 text-xs text-[#767876] italic">No prompt yet</div>
-                  )}
-
-                  {/* Schema preview */}
-                  <div className="mt-3 rounded-lg bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] p-2">
-                    <div className="text-[11px] text-[#767876] mb-1">Schema</div>
-                    <pre className="text-[11px] overflow-auto max-h-24">
-{schemaPreview}
-</pre>
-                  </div>
-
-                  {/* Recent items */}
                   {items.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {items.slice(0, 3).map((it) => (
                         <div key={it.id} className="p-3 rounded-lg bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] flex items-center justify-between">
                           <div>
                             <div className="text-xs font-semibold">{it.id}</div>
-                            <div className="text-[11px] text-[#767876]">
-                              {it.supplier || it.invoiceNo || it.date || it.amount || "—"}
-                            </div>
+                            <div className="text-[11px] text-[#767876]">{it.supplier || it.invoiceNo || it.date || it.amount || "—"}</div>
                           </div>
-                          <span
-                            className={`text-[11px] px-2 py-1 rounded-full ${
-                              it.quality === "Excellent"
-                                ? "bg-[#00FF38] text-black"
-                                : it.quality === "Good"
-                                ? "bg-yellow-400 text-black"
-                                : "bg-red-400 text-white"
-                            }`}
-                          >
+                          <span className={`text-[11px] px-2 py-1 rounded-full ${
+                            it.quality === "Excellent"
+                              ? "bg-[#00FF38] text-black"
+                              : it.quality === "Good"
+                              ? "bg-yellow-400 text-black"
+                              : "bg-red-400 text-white"
+                          }`}>
                             {it.quality}
                           </span>
                         </div>
@@ -497,10 +448,7 @@ export function OCRPage() {
                   )}
 
                   <div className="mt-4 grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => openEditFields(t.id)}
-                      className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2"
-                    >
+                    <button onClick={() => openEditor(t.id)} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2">
                       <Edit size={16} /> Edit fields
                     </button>
                     <button
@@ -512,7 +460,7 @@ export function OCRPage() {
                     >
                       <Eye size={16} /> Details
                     </button>
-                    <label className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center justify-center gap-2 cursor-pointer">
+                    <label className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2 cursor-pointer">
                       <Upload size={16} /> Upload
                       <input
                         type="file"
@@ -530,94 +478,30 @@ export function OCRPage() {
             })}
           </div>
         </div>
-      )}
 
-      {/* Detail view per document type */}
-      {step === "detail" && selectedType && (
-        <div className="flex-1 overflow-auto p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">{selectedType.name}</h2>
-              <div className="text-xs text-[#767876]">{selectedType.fields.length} fields • {selectedType.items.length} documents</div>
+        {/* Split editor panel */}
+        {editorTypeId && (
+          <aside className="w-full lg:w-[420px] border-l border-black/10 dark:border-[#312F2F] flex flex-col">
+            <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
+              <div className="font-semibold">Edit document type</div>
+              <button className="text-[#767876]" onClick={closeEditor}><X size={18} /></button>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setStep("dashboard")} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Back</button>
-              <button onClick={() => openEditFields(selectedType.id)} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center gap-2"><Edit size={16} /> Edit fields</button>
+            <div className="flex-1 overflow-auto p-4">
+              {docTypes.filter((t) => t.id === editorTypeId).map((t) => (
+                <TypeEditor
+                  key={t.id}
+                  typeDef={t}
+                  onChangeName={(name) => updateType(t.id, { name })}
+                  onChangePrompt={(prompt) => updateType(t.id, { prompt })}
+                  onUpdateField={(idx, patch) => updateFieldAt(t.id, idx, patch)}
+                  onAddField={(draft) => addFieldToType(t.id, draft)}
+                  onRemoveField={(idx) => removeFieldAt(t.id, idx)}
+                />
+              ))}
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <div className="text-xs text-[#767876] mb-1">Success rate</div>
-              <div className="text-2xl font-semibold">{percentForQuality(filteredItems(selectedType))}%</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <div className="text-xs text-[#767876] mb-1">Processed</div>
-              <div className="text-2xl font-semibold">{filteredItems(selectedType).length}</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <div className="text-xs text-[#767876] mb-1">Fields</div>
-              <div className="text-2xl font-semibold">{selectedType.fields.length}</div>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="rounded-2xl bg-gray-200 dark:bg-[#312F2F] p-4 flex items-center gap-3">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-white/60" />
-              </div>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search supplier, number, date..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#201d1d] rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Filter size={18} />
-              <select
-                value={qualityFilter}
-                onChange={(e) => setQualityFilter(e.target.value as DocQuality | "All")}
-                className="px-3 pr-8 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
-              >
-                <option>All</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Needs Review</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Items */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filteredItems(selectedType).map((it) => (
-              <div key={it.id} className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-semibold">{it.id}</div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    it.quality === "Excellent"
-                      ? "bg-[#00FF38] text-black"
-                      : it.quality === "Good"
-                      ? "bg-yellow-400 text-black"
-                      : "bg-red-400 text-white"
-                  }`}>{it.quality}</span>
-                </div>
-                <div className="text-xs text-[#767876] space-y-1">
-                  {it.invoiceNo && <div>Invoice no.: {it.invoiceNo}</div>}
-                  {it.supplier && <div>Supplier: {it.supplier}</div>}
-                  {it.amount && <div>Amount: {it.amount}</div>}
-                  {it.date && <div>Date: {it.date}</div>}
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <button className="px-3 py-1 rounded-full bg-[#322F2F]/90 text-white text-xs">View</button>
-                  <button className="text-red-400"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+          </aside>
+        )}
+      </div>
 
       {/* Processing */}
       {step === "processing" && (
@@ -676,85 +560,30 @@ export function OCRPage() {
               </div>
 
               <div className="mt-4 flex items-center gap-2">
-                <button
-                  onClick={saveReviewed}
-                  className="px-4 py-2 rounded-full bg-[#00FF38] text-black text-sm font-semibold flex items-center gap-2"
-                >
+                <button onClick={saveReviewed} className="px-4 py-2 rounded-full bg-[#00FF38] text-black text-sm font-semibold flex items-center gap-2">
                   <CheckCircle2 size={16} /> Save & finish
                 </button>
-                <button onClick={() => setStep("dashboard")} className="px-4 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">
-                  Cancel
-                </button>
-                <button onClick={() => {
-                  const header = ["Field", "Value", "Confidence"]; 
-                  const rows = extracted.map((f) => [f.key, f.value, `${f.confidence}%`]);
-                  const csv = [header, ...rows].map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
-                  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `export_${fileName || "document"}.csv`;
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  URL.revokeObjectURL(url);
-                }} className="px-4 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center gap-2">
+                <button onClick={() => setStep("dashboard")} className="px-4 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Cancel</button>
+                <button
+                  onClick={() => {
+                    const header = ["Field", "Value", "Confidence"]; 
+                    const rows = extracted.map((f) => [f.key, f.value, `${f.confidence}%`]);
+                    const csv = [header, ...rows].map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+                    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `export_${fileName || "document"}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="px-4 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center gap-2"
+                >
                   <Download size={16} /> Export CSV
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fields & Prompt modal */}
-      {showTypeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F]">
-            <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
-              <div className="font-semibold text-lg">{modalTypeId ? "Edit document type" : "Add document type"}</div>
-              <button className="text-[#767876]" onClick={() => setShowTypeModal(false)}><X size={18} /></button>
-            </div>
-            <div className="p-4 space-y-5">
-              {!modalTypeId && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-[#767876]">Name</label>
-                    <input
-                      value={newTypeName}
-                      onChange={(e) => setNewTypeName(e.target.value)}
-                      placeholder="e.g. Purchase Order"
-                      className="mt-1 w-full px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#767876]">Prompt</label>
-                    <textarea
-                      value={newTypePrompt}
-                      onChange={(e) => setNewTypePrompt(e.target.value)}
-                      placeholder="Describe how the AI should extract the fields defined in the schema..."
-                      className="mt-1 w-full min-h-40 px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
-                    />
-                  </div>
-                  <div className="pt-1">
-                    <button onClick={addDocType} className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
-                      <Plus size={16} /> Create type
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {modalTypeId && (
-                <TypeEditor
-                  typeDef={docTypes.find((t) => t.id === modalTypeId)!}
-                  onPromptChange={(p) => updatePrompt(modalTypeId!, p)}
-                  fieldDraft={fieldDraft}
-                  setFieldDraft={setFieldDraft}
-                  onAddField={addFieldToType}
-                  onUpdateField={updateFieldAt}
-                  onRemoveField={removeFieldAt}
-                />
-              )}
             </div>
           </div>
         </div>
@@ -765,36 +594,48 @@ export function OCRPage() {
 
 function TypeEditor({
   typeDef,
-  onPromptChange,
-  fieldDraft,
-  setFieldDraft,
-  onAddField,
+  onChangeName,
+  onChangePrompt,
   onUpdateField,
+  onAddField,
   onRemoveField,
 }: {
   typeDef: DocTypeDef;
-  onPromptChange: (p: string) => void;
-  fieldDraft: { name: string; type: FieldType; required: boolean; description: string; enumText: string };
-  setFieldDraft: (v: { name: string; type: FieldType; required: boolean; description: string; enumText: string }) => void;
-  onAddField: () => void;
+  onChangeName: (name: string) => void;
+  onChangePrompt: (prompt: string) => void;
   onUpdateField: (index: number, patch: Partial<FieldDef>) => void;
+  onAddField: (draft: { name: string; type: FieldType; required: boolean; description: string; enumText: string }) => void;
   onRemoveField: (index: number) => void;
 }) {
-  const schemaPreview = JSON.stringify(schemaFromFields(typeDef.fields), null, 2);
+  const [draft, setDraft] = useState<{ name: string; type: FieldType; required: boolean; description: string; enumText: string }>({
+    name: "",
+    type: "string",
+    required: true,
+    description: "",
+    enumText: "",
+  });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <div>
+        <div className="text-xs text-[#767876] mb-1">Name</div>
+        <input
+          value={typeDef.name}
+          onChange={(e) => onChangeName(e.target.value)}
+          placeholder="Type name"
+          className="w-full px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+        />
+      </div>
       <div>
         <div className="text-xs text-[#767876] mb-1">Prompt</div>
         <textarea
           value={typeDef.prompt}
-          onChange={(e) => onPromptChange(e.target.value)}
-          placeholder="Describe how the AI should extract the fields defined in the schema..."
+          onChange={(e) => onChangePrompt(e.target.value)}
+          placeholder="Describe how the AI should extract the fields..."
           className="w-full min-h-40 px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
         />
       </div>
 
-      {/* Fields table */}
       <div>
         <div className="text-xs text-[#767876] mb-2">Fields</div>
         <div className="space-y-2">
@@ -811,10 +652,10 @@ function TypeEditor({
                 onChange={(e) => onUpdateField(i, { type: e.target.value as FieldType })}
                 className="px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               >
-                <option value="string">string</option>
-                <option value="number">number</option>
-                <option value="integer">integer</option>
-                <option value="boolean">boolean</option>
+                <option value="string">{TYPE_LABELS.string}</option>
+                <option value="number">{TYPE_LABELS.number}</option>
+                <option value="integer">{TYPE_LABELS.integer}</option>
+                <option value="boolean">{TYPE_LABELS.boolean}</option>
               </select>
               <input
                 value={f.description || ""}
@@ -823,11 +664,7 @@ function TypeEditor({
                 className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               />
               <label className="flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={f.required}
-                  onChange={(e) => onUpdateField(i, { required: e.target.checked })}
-                />
+                <input type="checkbox" checked={f.required} onChange={(e) => onUpdateField(i, { required: e.target.checked })} />
                 Required
               </label>
               {f.type === "string" && (
@@ -850,58 +687,46 @@ function TypeEditor({
         {/* Add field row */}
         <div className="mt-3 p-3 rounded-lg bg-gray-200 dark:bg-[#312F2F] grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
           <input
-            value={fieldDraft.name}
-            onChange={(e) => setFieldDraft({ ...fieldDraft, name: e.target.value })}
+            value={draft.name}
+            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             placeholder="Field name"
             className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
           />
           <select
-            value={fieldDraft.type}
-            onChange={(e) => setFieldDraft({ ...fieldDraft, type: e.target.value as FieldType })}
+            value={draft.type}
+            onChange={(e) => setDraft({ ...draft, type: e.target.value as FieldType })}
             className="px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
           >
-            <option value="string">string</option>
-            <option value="number">number</option>
-            <option value="integer">integer</option>
-            <option value="boolean">boolean</option>
+            <option value="string">{TYPE_LABELS.string}</option>
+            <option value="number">{TYPE_LABELS.number}</option>
+            <option value="integer">{TYPE_LABELS.integer}</option>
+            <option value="boolean">{TYPE_LABELS.boolean}</option>
           </select>
           <input
-            value={fieldDraft.description}
-            onChange={(e) => setFieldDraft({ ...fieldDraft, description: e.target.value })}
+            value={draft.description}
+            onChange={(e) => setDraft({ ...draft, description: e.target.value })}
             placeholder="Description"
             className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
           />
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={fieldDraft.required}
-              onChange={(e) => setFieldDraft({ ...fieldDraft, required: e.target.checked })}
-            />
+            <input type="checkbox" checked={draft.required} onChange={(e) => setDraft({ ...draft, required: e.target.checked })} />
             Required
           </label>
           <input
-            value={fieldDraft.enumText}
-            onChange={(e) => setFieldDraft({ ...fieldDraft, enumText: e.target.value })}
+            value={draft.enumText}
+            onChange={(e) => setDraft({ ...draft, enumText: e.target.value })}
             placeholder="Enum (comma-separated)"
             className="md:col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
           />
           <div className="md:col-span-1 flex justify-end">
-            <button onClick={onAddField} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
+            <button onClick={() => onAddField(draft)} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
               <Plus size={16} /> Add
             </button>
           </div>
         </div>
       </div>
 
-      {/* Schema preview */}
-      <div>
-        <div className="text-xs text-[#767876] mb-1">JSON Schema (for OpenAI structured outputs)</div>
-        <div className="rounded-lg bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] p-2">
-          <pre className="text-[11px] overflow-auto max-h-48">
-{schemaPreview}
-</pre>
-        </div>
-      </div>
+      <div className="pt-2 text-[11px] text-[#767876]">Note: Field types are stored for structured extraction.</div>
     </div>
   );
 }
