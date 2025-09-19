@@ -422,7 +422,7 @@ export function OCRPage() {
                 const items = filteredItems(t);
                 const success = percentForQuality(items);
                 return (
-                  <div key={t.id} onClick={() => { setSelectedTypeId(t.id); setStep("detail"); }} className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm cursor-pointer hover:shadow">
+                  <div key={t.id} onClick={() => { setSelectedTypeId(t.id); onOpenDetail(t); }} className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm cursor-pointer hover:shadow">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-lg font-semibold">{t.name}</h3>
