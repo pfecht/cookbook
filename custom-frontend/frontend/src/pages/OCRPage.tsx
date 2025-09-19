@@ -92,6 +92,7 @@ export function OCRPage() {
       name: "Invoice",
       prompt:
         "Extract invoice data with high accuracy. Return invoice_number, amount, date, supplier as defined in the schema.",
+      weeklySuccess: [92, 94, 91, 95, 96, 93, 97, 98],
       fields: [
         { name: "Invoice number", type: "string", required: true, description: "Invoice identifier" },
         { name: "Amount", type: "string", required: true, description: "Gross amount with currency" },
@@ -113,6 +114,7 @@ export function OCRPage() {
       id: "contract",
       name: "Contract",
       prompt: "Extract core contract metadata per schema.",
+      weeklySuccess: [78, 80, 82, 79, 81, 83, 85, 86],
       fields: [
         { name: "Counterparty", type: "string", required: true },
         { name: "Start date", type: "string", required: false },
@@ -131,6 +133,7 @@ export function OCRPage() {
       id: "delivery",
       name: "Delivery Note",
       prompt: "Extract delivery slip details per schema.",
+      weeklySuccess: [60, 63, 65, 67, 70, 72, 74, 76],
       fields: [
         { name: "Delivery no.", type: "string", required: true },
         { name: "Date", type: "string", required: true },
