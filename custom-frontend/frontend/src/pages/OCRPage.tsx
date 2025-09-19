@@ -463,6 +463,15 @@ export function OCRPage() {
                       </div>
                     )}
 
+                    <div className="mt-4">
+                      <div className="h-12 flex items-end gap-1">
+                        {t.weeklySuccess.map((v, i) => (
+                          <div key={i} className="flex-1 bg-[#00FF38]" style={{ height: `${Math.max(8, Math.min(100, v)) * 0.8}%`, opacity: 0.25 + v/200 }} />
+                        ))}
+                      </div>
+                      <div className="mt-1 text-[10px] text-[#767876]">Last 8 weeks</div>
+                    </div>
+
                     <div className="mt-4 grid grid-cols-3 gap-2">
                       <button onClick={(e) => { e.stopPropagation(); openEditor(t.id); }} className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2">
                         <Edit size={16} /> Edit fields
