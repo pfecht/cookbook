@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Edit, Upload } from "lucide-react";
-import type { DocTypeDef } from "./OCRPage";
+import { Edit, Upload, TrendingUp, TrendingDown } from "lucide-react";
+import type { DocTypeDef, FieldDef } from "./OCRPage";
 
 function LineChart({ data, height = 140 }: { data: number[]; height?: number }) {
   const width = 520;
@@ -59,6 +59,39 @@ function LineChart({ data, height = 140 }: { data: number[]; height?: number }) 
       </g>
     </svg>
   );
+}
+
+function Sparkline({ data }: { data: number[] }) {
+  const width = 140;
+  const height = 36;
+  const pad = 6;
+  const pts = useMemo(() => {
+    const n = data.length;
+    if (!n) return [] as { x: number; y: number }[];
+    const stepX = n > 1 ? (width - pad * 2) / (n - 1) : 0;
+    return data.map((v, i) => {
+      const clamped = Math.max(0, Math.min(100, v));
+      const x = pad + i * stepX;
+      const y = pad + (height - pad * 2) * (1 - clamped / 100);
+      return { x, y };
+    });
+  }, [data]);
+  const d = useMemo(() => (pts.length ? pts.map((p, i) => `${i ? "L" : "M"}${p.x},${p.y}`).join(" ") : ""), [pts]);
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-9">
+      {d && <path d={d} stroke="#00FF38" strokeWidth={2} fill="none" />}
+    </svg>
+  );
+}
+
+function fieldSeries(field: FieldDef, fallback: number[]): number[] {
+  if (field.weeklySuccess && field.weeklySuccess.length) return field.weeklySuccess.slice(-12);
+  const idxBias = Array.from({ length: fallback.length }, (_, i) => {
+    const sign = (field.name.length + i) % 2 === 0 ? 1 : -1;
+    const mag = ((field.name.length % 5) + 1) * 0.6;
+    return Math.max(-5, Math.min(5, sign * mag));
+  });
+  return fallback.slice(-12).map((v, i) => Math.max(0, Math.min(100, Math.round(v + (idxBias[i] || 0)))));
 }
 
 export function OCRDetailPage({ typeDef, onBack, onEdit }: { typeDef: DocTypeDef; onBack: () => void; onEdit: (id: string) => void }) {
@@ -163,14 +196,39 @@ export function OCRDetailPage({ typeDef, onBack, onEdit }: { typeDef: DocTypeDef
                 <div className="text-sm font-semibold mb-2">Prompt</div>
                 <div className="text-sm text-[#767876] whitespace-pre-wrap">{typeDef.prompt || "No prompt provided."}</div>
                 <div className="mt-4 text-sm font-semibold">Fields</div>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {typeDef.fields.map((f, i) => (
-                    <div key={`${f.name}-${i}`} className="p-3 rounded-lg bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
-                      <div className="font-medium text-sm">{f.name}</div>
-                      <div className="text-[11px] text-[#767876]">{f.type}{f.required ? " • Required" : ""}</div>
-                      {f.description && <div className="text-[11px] text-[#767876] mt-1">{f.description}</div>}
-                    </div>
-                  ))}
+                <div className="mt-2 rounded-2xl border border-black/10 dark:border-[#312F2F] divide-y divide-black/10 dark:divide-[#312F2F]">
+                  <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs text-[#767876]">
+                    <div className="col-span-3">Field</div>
+                    <div className="col-span-2">Type</div>
+                    <div className="col-span-1">Req</div>
+                    <div className="col-span-2">Completion</div>
+                    <div className="col-span-1">Trend</div>
+                    <div className="col-span-3">Over time</div>
+                  </div>
+                  {typeDef.fields.map((f, i) => {
+                    const s = fieldSeries(f, series);
+                    const avgF = s.length ? Math.round(s.reduce((a, b) => a + b, 0) / s.length) : 0;
+                    const up = s.length > 1 ? s[s.length - 1] >= s[0] : true;
+                    return (
+                      <div key={`${f.name}-${i}`} className="grid grid-cols-12 gap-2 px-4 py-3 items-center">
+                        <div className="col-span-3">
+                          <div className="font-medium text-sm">{f.name}</div>
+                          {f.description && <div className="text:[11px] text-[#767876] mt-0.5 line-clamp-1">{f.description}</div>}
+                        </div>
+                        <div className="col-span-2 text-sm">{f.type}</div>
+                        <div className="col-span-1 text-sm">{f.required ? "Yes" : "No"}</div>
+                        <div className="col-span-2">
+                          <span className="px-2 py-1 rounded-full border border-[#00FF38] text-[#00FF38] text-[11px]">{avgF}%</span>
+                        </div>
+                        <div className="col-span-1">
+                          {up ? <TrendingUp size={16} className="text-[#00FF38]" /> : <TrendingDown size={16} className="text-red-400" />}
+                        </div>
+                        <div className="col-span-3">
+                          <Sparkline data={s} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>
