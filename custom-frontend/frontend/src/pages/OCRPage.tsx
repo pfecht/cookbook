@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, CircleDashed, Download, FileText, Filter, History, Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleDashed, Download, FileText, Filter, History, Loader2, Plus, Search, Trash2 } from "lucide-react";
 
 type DocType = "Rechnung" | "Vertrag" | "Lieferschein" | "Benutzerdefiniert";
 
