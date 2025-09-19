@@ -104,7 +104,7 @@ export function OCRPage() {
 
   const updateField = (key: string, value: string) => {
     setExtracted((prev) =>
-      prev.map((f) => (f.key === key ? { ...f, value, confidence: Math.min(100, Math.max(85, f.confidence + 5))) : f))
+      prev.map((f) => (f.key === key ? { ...f, value, confidence: Math.min(100, Math.max(85, f.confidence + 5)) } : f))
     );
     setLearningNote("Danke! Das System lernt aus Ihrer Korrektur");
     const t = setTimeout(() => setLearningNote(null), 2000);
