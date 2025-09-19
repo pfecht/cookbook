@@ -19,11 +19,7 @@ function App() {
 
   useEffect(() => {
     if (session?.socket.connected) return;
-    fetch("http://localhost:80/custom-auth", { credentials: "include" })
-      .catch(() => undefined)
-      .finally(() => {
-        connect({ userEnv });
-      });
+    connect({ userEnv });
   }, [connect, session?.socket.connected]);
 
   if (page === "chat") {
