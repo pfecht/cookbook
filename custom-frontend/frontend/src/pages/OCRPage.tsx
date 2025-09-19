@@ -381,7 +381,7 @@ export function OCRPage() {
                 <select
                   value={qualityFilter}
                   onChange={(e) => setQualityFilter(e.target.value as DocQuality | "All")}
-                  className="px-3 pr-8 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                  className="px-2 pr-6 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs"
                 >
                   <option>All</option>
                   <option>Excellent</option>
