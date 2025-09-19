@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BarChart2,
   CheckCircle2,
-  ChevronDown,
   Download,
   Edit,
   Eye,
@@ -278,20 +277,7 @@ export function OCRPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown size={16} />
             </div>
-            <label className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm cursor-pointer">
-              Choose file
-              <input
-                type="file"
-                accept="application/pdf,image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleStartUpload(f);
-                }}
-              />
-            </label>
           </div>
           <button
             onClick={() => {
@@ -325,7 +311,7 @@ export function OCRPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search supplier, number, date..."
-                  className="w-72 pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#543639]/48 rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
+                  className="w-72 pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#201d1d] rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -333,7 +319,7 @@ export function OCRPage() {
                 <select
                   value={qualityFilter}
                   onChange={(e) => setQualityFilter(e.target.value as DocQuality | "All")}
-                  className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                  className="px-3 pr-8 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
                 >
                   <option>All</option>
                   <option>Excellent</option>
@@ -494,7 +480,7 @@ export function OCRPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search supplier, number, date..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#543639]/48 rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#201d1d] rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -502,7 +488,7 @@ export function OCRPage() {
               <select
                 value={qualityFilter}
                 onChange={(e) => setQualityFilter(e.target.value as DocQuality | "All")}
-                className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                className="px-3 pr-8 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               >
                 <option>All</option>
                 <option>Excellent</option>
