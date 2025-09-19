@@ -323,6 +323,17 @@ export function OCRPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <div className="hidden md:block relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-[#767876]" />
+            </div>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search documents..."
+              className="w-64 pl-10 pr-4 py-2 rounded-full bg-gray-100 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+            />
+          </div>
           <button
             onClick={() => {
               setUploadTypeId(selectedTypeId || docTypes[0]?.id || "");
@@ -361,17 +372,6 @@ export function OCRPage() {
 
           <div className="rounded-2xl bg-gray-100 dark:bg-[#312F2F] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-white/60" />
-                </div>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search supplier, number, date..."
-                  className="w-72 pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#201d1d] rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60"
-                />
-              </div>
               <div className="flex items-center gap-2">
                 <Filter size={18} />
                 <select
