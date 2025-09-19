@@ -465,7 +465,7 @@ export function OCRPage({ onOpenDetail }: { onOpenDetail: (type: DocTypeDef) => 
 
                     <div className="mt-4">
                       <div className="h-12 flex items-end gap-1">
-                        {t.weeklySuccess.map((v, i) => (
+                        {(t.weeklySuccess || []).map((v, i) => (
                           <div key={i} className="flex-1 bg-[#00FF38]" style={{ height: `${Math.max(8, Math.min(100, v)) * 0.8}%`, opacity: 0.25 + v/200 }} />
                         ))}
                       </div>
