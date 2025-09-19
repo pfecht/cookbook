@@ -468,7 +468,8 @@ export function OCRPage() {
                         <Edit size={16} /> Edit fields
                       </button>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedTypeId(t.id);
                           setStep("detail");
                         }}
