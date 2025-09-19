@@ -477,7 +477,7 @@ export function OCRPage() {
                       >
                         <Eye size={16} /> Details
                       </button>
-                      <label className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2 cursor-pointer">
+                      <label onClick={(e) => e.stopPropagation()} className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <Upload size={16} /> Upload
                         <input
                           type="file"
