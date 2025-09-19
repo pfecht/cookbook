@@ -1,4 +1,4 @@
-import { MessageSquare, Settings, Moon, Sun, Radar } from "lucide-react";
+import { MessageSquare, Settings, Moon, Sun, Radar, FileText } from "lucide-react";
 import { useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import type { Page } from "./MainShell";
@@ -18,6 +18,7 @@ export function Sidebar({
 
   const navItems: { icon: any; label: string; key: Page }[] = [
     { icon: MessageSquare, label: "Chat", key: "chat" },
+    { icon: FileText, label: "Dokumente", key: "documents" },
     { icon: Radar, label: "Radar", key: "radar" },
     { icon: Settings, label: "Settings", key: "settings" },
   ];

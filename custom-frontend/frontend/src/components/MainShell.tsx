@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 
-export type Page = "chat" | "radar" | "settings";
+export type Page = "chat" | "documents" | "radar" | "settings";
 
 export function MainShell({
   activePage,

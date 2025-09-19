@@ -7,6 +7,7 @@ import { ChatList } from "./components/ChatList";
 import { ChatArea } from "./components/ChatArea";
 import { SettingsPage } from "./pages/SettingsPage";
 import { RadarPage } from "./pages/RadarPage";
+import { OCRPage } from "./pages/OCRPage";
 
 const userEnv = {};
 
@@ -29,6 +30,14 @@ function App() {
     return (
       <MainShell activePage={page} onNavigate={setPage} leftPanel={<ChatList />}>
         <ChatArea />
+      </MainShell>
+    );
+  }
+
+  if (page === "documents") {
+    return (
+      <MainShell activePage={page} onNavigate={setPage}>
+        <OCRPage />
       </MainShell>
     );
   }
