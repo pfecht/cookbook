@@ -356,15 +356,15 @@ export function OCRPage() {
         <div className={`flex-1 overflow-auto p-4 space-y-4 ${editorTypeId ? "hidden lg:block" : "block"}`}>
           {/* Top summary + filters */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
+            <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm">
               <div className="text-xs text-[#767876]">Total documents</div>
               <div className="text-xl font-semibold">{totalDocs}</div>
             </div>
-            <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
+            <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm">
               <div className="text-xs text-[#767876]">Success rate</div>
               <div className="text-xl font-semibold">{overallPercent}%</div>
             </div>
-            <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
+            <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm">
               <div className="text-xs text-[#767876]">Document types</div>
               <div className="text-xl font-semibold">{docTypes.length}</div>
             </div>
@@ -406,7 +406,7 @@ export function OCRPage() {
 
           {viewMode === "cards" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-dashed border-black/20 dark:border-black/40 flex items-center justify-center">
+              <div className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-dashed border-black/20 dark:border-black/40 flex items-center justify-center shadow-sm">
                 <div className="text-center">
                   <button onClick={addNewType} className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
                     <Plus size={16} /> Add document type
@@ -418,7 +418,7 @@ export function OCRPage() {
                 const items = filteredItems(t);
                 const success = percentForQuality(items);
                 return (
-                  <div key={t.id} className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
+                  <div key={t.id} className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-lg font-semibold">{t.name}</h3>
