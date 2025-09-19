@@ -527,7 +527,7 @@ export function OCRPage() {
                       <span className="px-2 py-1 rounded-full border border-[#00FF38] text-[#00FF38] text-[11px]">{success}% OK</span>
                     </div>
                     <div className="col-span-2 flex justify-end gap-2">
-                      <button onClick={() => openEditor(t.id)} className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs">Edit</button>
+                      <button onClick={(e) => { e.stopPropagation(); openEditor(t.id); }} className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs">Edit</button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
