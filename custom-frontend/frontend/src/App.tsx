@@ -13,7 +13,7 @@ import { OCRDetailPage } from "./pages/OCRDetailPage";
 const userEnv = {};
 
 function App() {
-  const [page, setPage] = useState<Page>("chat");
+  const [page, setPage] = useState<Page>("documents");
   const [docDetail, setDocDetail] = useState<DocTypeDef | null>(null);
   const [detailEditTypeId, setDetailEditTypeId] = useState<string | null>(null);
 

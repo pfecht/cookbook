@@ -364,7 +364,7 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
       {/* Content area with optional split editor */}
       <div className="flex-1 min-h-0 flex">
         {/* Main content */}
-        <div className={`flex-1 overflow-auto p-4 space-y-4 ${editorTypeId ? "hidden lg:block" : "block"}`}>
+        <div className="flex-1 overflow-auto p-4 space-y-4">
           {/* Top summary + filters */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F] shadow-sm">
@@ -568,27 +568,29 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
           )}
         </div>
 
-        {/* Split editor panel */}
+        {/* Editor dialog */}
         {editorTypeId && (
-          <aside className="w-full lg:w-[420px] border-l border-black/10 dark:border-[#312F2F] flex flex-col">
-            <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
-              <div className="font-semibold">Edit document type</div>
-              <button className="text-[#767876]" onClick={closeEditor}><X size={18} /></button>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-3xl rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] shadow-xl">
+              <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
+                <div className="font-semibold">Edit document type</div>
+                <button className="text-[#767876]" onClick={closeEditor}><X size={18} /></button>
+              </div>
+              <div className="max-h-[70vh] overflow-auto p-4">
+                {docTypes.filter((t) => t.id === editorTypeId).map((t) => (
+                  <TypeEditor
+                    key={t.id}
+                    typeDef={t}
+                    onChangeName={(name) => updateType(t.id, { name })}
+                    onChangePrompt={(prompt) => updateType(t.id, { prompt })}
+                    onUpdateField={(idx, patch) => updateFieldAt(t.id, idx, patch)}
+                    onAddField={(draft) => addFieldToType(t.id, draft)}
+                    onRemoveField={(idx) => removeFieldAt(t.id, idx)}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="flex-1 overflow-auto p-4">
-              {docTypes.filter((t) => t.id === editorTypeId).map((t) => (
-                <TypeEditor
-                  key={t.id}
-                  typeDef={t}
-                  onChangeName={(name) => updateType(t.id, { name })}
-                  onChangePrompt={(prompt) => updateType(t.id, { prompt })}
-                  onUpdateField={(idx, patch) => updateFieldAt(t.id, idx, patch)}
-                  onAddField={(draft) => addFieldToType(t.id, draft)}
-                  onRemoveField={(idx) => removeFieldAt(t.id, idx)}
-                />
-              ))}
-            </div>
-          </aside>
+          </div>
         )}
       </div>
 
