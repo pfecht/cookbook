@@ -520,7 +520,8 @@ export function OCRPage() {
                     <div className="col-span-2 flex justify-end gap-2">
                       <button onClick={() => openEditor(t.id)} className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs">Edit</button>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedTypeId(t.id);
                           setStep("detail");
                         }}
