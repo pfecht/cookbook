@@ -7,12 +7,14 @@ import { ChatList } from "./components/ChatList";
 import { ChatArea } from "./components/ChatArea";
 import { SettingsPage } from "./pages/SettingsPage";
 import { RadarPage } from "./pages/RadarPage";
-import { OCRPage } from "./pages/OCRPage";
+import { OCRPage, DocTypeDef } from "./pages/OCRPage";
+import { OCRDetailPage } from "./pages/OCRDetailPage";
 
 const userEnv = {};
 
 function App() {
   const [page, setPage] = useState<Page>("chat");
+  const [docDetail, setDocDetail] = useState<DocTypeDef | null>(null);
 
   const { connect } = useChatSession();
   const session = useRecoilValue(sessionState);
@@ -33,7 +35,11 @@ function App() {
   if (page === "documents") {
     return (
       <MainShell activePage={page} onNavigate={setPage}>
-        <OCRPage />
+        {docDetail ? (
+          <OCRDetailPage typeDef={docDetail} onBack={() => setDocDetail(null)} />
+        ) : (
+          <OCRPage onOpenDetail={(t) => setDocDetail(t)} />
+        )}
       </MainShell>
     );
   }
