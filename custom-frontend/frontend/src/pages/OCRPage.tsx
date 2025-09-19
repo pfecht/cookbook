@@ -237,7 +237,7 @@ export function OCRPage({ onOpenDetail }: { onOpenDetail: (type: DocTypeDef) => 
 
   const addNewType = () => {
     const id = `type-${Date.now()}`;
-    const next: DocTypeDef = { id, name: "New type", prompt: "", fields: [], items: [] };
+    const next: DocTypeDef = { id, name: "New type", prompt: "", fields: [], items: [], weeklySuccess: [] };
     setDocTypes((p) => [next, ...p]);
     setEditorTypeId(id);
   };
