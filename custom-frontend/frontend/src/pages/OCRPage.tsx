@@ -585,6 +585,62 @@ export function OCRPage() {
         )}
       </div>
 
+      {/* Detail page */}
+      {step === "detail" && (
+        <div className="flex-1 overflow-auto p-4">
+          <div className="max-w-6xl mx-auto space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setStep("dashboard")} className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs">Back</button>
+                <h2 className="text-xl font-semibold">{selectedType?.name}</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => openEditor(selectedType!.id)} className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs">Edit fields</button>
+                <label className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs cursor-pointer">
+                  <Upload size={14} /> Upload
+                  <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleStartUpload(f, selectedType!.id); }} />
+                </label>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold text-sm">Success over time</div>
+                <div className="text-xs text-[#767876]">Last 12 weeks</div>
+              </div>
+              <div className="h-28 flex items-end gap-2">
+                {(selectedType?.weeklySuccess || []).concat((selectedType?.weeklySuccess || []).slice(0,4)).slice(0,12).map((v, i) => (
+                  <div key={i} className="flex-1 bg-[#00FF38]" style={{ height: `${Math.max(8, Math.min(100, v))}%`, opacity: 0.25 + v/200 }} />
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F]">
+              <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs text-[#767876]">
+                <div className="col-span-3">ID</div>
+                <div className="col-span-3">Main field</div>
+                <div className="col-span-2">Date</div>
+                <div className="col-span-2">Amount</div>
+                <div className="col-span-2 text-right">Quality</div>
+              </div>
+              {(selectedType ? filteredItems(selectedType) : []).map((it) => (
+                <div key={it.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center border-t border-black/5 dark:border-[#312F2F]">
+                  <div className="col-span-3 text-sm font-medium">{it.id}</div>
+                  <div className="col-span-3 text-sm">{it.supplier || it.invoiceNo || "—"}</div>
+                  <div className="col-span-2 text-sm">{it.date || "—"}</div>
+                  <div className="col-span-2 text-sm">{it.amount || "—"}</div>
+                  <div className="col-span-2 text-right">
+                    <span className={`text-[11px] px-2 py-1 rounded-full border ${
+                      it.quality === "Excellent" ? "border-[#00FF38] text-[#00FF38]" : it.quality === "Good" ? "border-yellow-400 text-yellow-400" : "border-red-400 text-red-400"
+                    }`}>{it.quality}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Processing */}
       {step === "processing" && (
         <div className="flex-1 p-6 overflow-auto">
