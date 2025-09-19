@@ -85,7 +85,7 @@ function schemaFromFields(fields: FieldDef[]) {
 
 export function OCRPage() {
   const [step, setStep] = useState<Step>("dashboard");
-  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [docTypes, setDocTypes] = useState<DocTypeDef[]>([
     {
       id: "invoice",
