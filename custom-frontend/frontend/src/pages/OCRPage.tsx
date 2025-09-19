@@ -376,8 +376,8 @@ export function OCRPage() {
 
           <div className="rounded-2xl bg-transparent p-2 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <Filter size={18} />
+              <div className="flex items-center gap-2 text-xs text-[#767876]">
+                <Filter size={16} />
                 <select
                   value={qualityFilter}
                   onChange={(e) => setQualityFilter(e.target.value as DocQuality | "All")}
