@@ -213,7 +213,7 @@ export function OCRDetailPage({ typeDef, onBack, onEdit }: { typeDef: DocTypeDef
                       <div key={`${f.name}-${i}`} className="grid grid-cols-12 gap-2 px-4 py-3 items-center">
                         <div className="col-span-3">
                           <div className="font-medium text-sm">{f.name}</div>
-                          {f.description && <div className="text:[11px] text-[#767876] mt-0.5 line-clamp-1">{f.description}</div>}
+                          {f.description && <div className="text-[11px] text-[#767876] mt-0.5 line-clamp-1">{f.description}</div>}
                         </div>
                         <div className="col-span-2 text-sm">{f.type}</div>
                         <div className="col-span-1 text-sm">{f.required ? "Yes" : "No"}</div>
