@@ -43,6 +43,7 @@ export type FieldDef = {
   description?: string;
   required: boolean;
   enum?: string[];
+  weeklySuccess?: number[];
 };
 
 export type DocTypeDef = {
@@ -155,6 +156,8 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
   const [extracted, setExtracted] = useState<ExtractedField[]>([]);
 
   const [editorTypeId, setEditorTypeId] = useState<string | null>(null);
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [editorDraft, setEditorDraft] = useState<DocTypeDef | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadTypeId, setUploadTypeId] = useState<string>("invoice");
 
@@ -237,8 +240,9 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
 
   const addNewType = () => {
     const id = `type-${Date.now()}`;
-    const next: DocTypeDef = { id, name: "New type", prompt: "", fields: [], items: [], weeklySuccess: [] };
-    setDocTypes((p) => [next, ...p]);
+    const draft: DocTypeDef = { id, name: "New type", prompt: "", fields: [], items: [], weeklySuccess: [] };
+    setCreatingNew(true);
+    setEditorDraft(draft);
     setEditorTypeId(id);
   };
 
@@ -249,8 +253,8 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
     if (editorTypeId === id) setEditorTypeId(null);
   };
 
-  const openEditor = (id: string) => setEditorTypeId(id);
-  const closeEditor = () => setEditorTypeId(null);
+  const openEditor = (id: string) => { setCreatingNew(false); setEditorDraft(null); setEditorTypeId(id); };
+  const closeEditor = () => { setEditorTypeId(null); setCreatingNew(false); setEditorDraft(null); };
 
   useEffect(() => {
     if (openEditorForTypeId) {
@@ -260,48 +264,54 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
   }, [openEditorForTypeId]);
 
   const updateType = (id: string, patch: Partial<DocTypeDef>) => {
-    setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    if (creatingNew && editorDraft && editorDraft.id === id) {
+      setEditorDraft({ ...editorDraft, ...patch });
+    } else {
+      setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    }
   };
 
   const updateFieldAt = (id: string, index: number, patch: Partial<FieldDef>) => {
-    setDocTypes((p) =>
-      p.map((t) =>
-        t.id === id
-          ? { ...t, fields: t.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)) }
-          : t
-      )
-    );
+    if (creatingNew && editorDraft && editorDraft.id === id) {
+      const fields = editorDraft.fields.map((f, i) => (i === index ? { ...f, ...patch } : f));
+      setEditorDraft({ ...editorDraft, fields });
+    } else {
+      setDocTypes((p) =>
+        p.map((t) =>
+          t.id === id
+            ? { ...t, fields: t.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)) }
+            : t
+        )
+      );
+    }
   };
 
   const addFieldToType = (id: string, draft: { name: string; type: FieldType; required: boolean; description: string; enumText: string }) => {
     const name = draft.name.trim();
     if (!name) return;
-    setDocTypes((p) =>
-      p.map((t) =>
-        t.id === id && !t.fields.find((f) => f.name === name)
-          ? {
-              ...t,
-              fields: [
-                ...t.fields,
-                {
-                  name,
-                  type: draft.type,
-                  required: draft.required,
-                  description: draft.description.trim() || undefined,
-                  enum:
-                    draft.type === "string"
-                      ? draft.enumText.split(",").map((s) => s.trim()).filter(Boolean)
-                      : undefined,
-                },
-              ],
-            }
-          : t
-      )
-    );
+    const newField: FieldDef = {
+      name,
+      type: draft.type,
+      required: draft.required,
+      description: draft.description.trim() || undefined,
+      enum: draft.type === "string" ? draft.enumText.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+      weeklySuccess: [],
+    };
+    if (creatingNew && editorDraft && editorDraft.id === id) {
+      setEditorDraft({ ...editorDraft, fields: [...editorDraft.fields, newField] });
+    } else {
+      setDocTypes((p) =>
+        p.map((t) => (t.id === id && !t.fields.find((f) => f.name === name) ? { ...t, fields: [...t.fields, newField] } : t))
+      );
+    }
   };
 
   const removeFieldAt = (id: string, index: number) => {
-    setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, fields: t.fields.filter((_, i) => i !== index) } : t)));
+    if (creatingNew && editorDraft && editorDraft.id === id) {
+      setEditorDraft({ ...editorDraft, fields: editorDraft.fields.filter((_, i) => i !== index) });
+    } else {
+      setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, fields: t.fields.filter((_, i) => i !== index) } : t)));
+    }
   };
 
   const filteredItems = (t: DocTypeDef) =>
@@ -571,23 +581,56 @@ export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled
         {/* Editor dialog */}
         {editorTypeId && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-3xl rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] shadow-xl">
+            <div className="w-full max-w-4xl rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] shadow-xl">
               <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
-                <div className="font-semibold">Edit document type</div>
+                <div className="font-semibold">{creatingNew ? "Create document type" : "Edit document type"}</div>
                 <button className="text-[#767876]" onClick={closeEditor}><X size={18} /></button>
               </div>
               <div className="max-h-[70vh] overflow-auto p-4">
-                {docTypes.filter((t) => t.id === editorTypeId).map((t) => (
+                {(creatingNew && editorDraft && editorDraft.id === editorTypeId) ? (
                   <TypeEditor
-                    key={t.id}
-                    typeDef={t}
-                    onChangeName={(name) => updateType(t.id, { name })}
-                    onChangePrompt={(prompt) => updateType(t.id, { prompt })}
-                    onUpdateField={(idx, patch) => updateFieldAt(t.id, idx, patch)}
-                    onAddField={(draft) => addFieldToType(t.id, draft)}
-                    onRemoveField={(idx) => removeFieldAt(t.id, idx)}
+                    key={editorDraft.id}
+                    typeDef={editorDraft}
+                    onChangeName={(name) => updateType(editorDraft.id, { name })}
+                    onChangePrompt={(prompt) => updateType(editorDraft.id, { prompt })}
+                    onUpdateField={(idx, patch) => updateFieldAt(editorDraft.id, idx, patch)}
+                    onAddField={(d) => addFieldToType(editorDraft.id, d)}
+                    onRemoveField={(idx) => removeFieldAt(editorDraft.id, idx)}
                   />
-                ))}
+                ) : (
+                  docTypes.filter((t) => t.id === editorTypeId).map((t) => (
+                    <TypeEditor
+                      key={t.id}
+                      typeDef={t}
+                      onChangeName={(name) => updateType(t.id, { name })}
+                      onChangePrompt={(prompt) => updateType(t.id, { prompt })}
+                      onUpdateField={(idx, patch) => updateFieldAt(t.id, idx, patch)}
+                      onAddField={(d) => addFieldToType(t.id, d)}
+                      onRemoveField={(idx) => removeFieldAt(t.id, idx)}
+                    />
+                  ))
+                )}
+              </div>
+              <div className="p-4 border-t border-black/10 dark:border-[#312F2F] flex items-center justify-end gap-2">
+                {creatingNew ? (
+                  <>
+                    <button onClick={closeEditor} className="px-4 py-2 rounded-full bg-gray-100 dark:bg-[#312F2F] text-sm">Cancel</button>
+                    <button
+                      onClick={() => {
+                        if (editorDraft) {
+                          setDocTypes((p) => [editorDraft, ...p]);
+                          setSelectedTypeId(editorDraft.id);
+                        }
+                        closeEditor();
+                      }}
+                      className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm"
+                    >
+                      Create type
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={closeEditor} className="px-4 py-2 rounded-full bg-gray-100 dark:bg-[#312F2F] text-sm">Done</button>
+                )}
               </div>
             </div>
           </div>
