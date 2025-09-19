@@ -17,9 +17,9 @@ import {
   List as ListIcon,
 } from "lucide-react";
 
-type DocQuality = "Excellent" | "Good" | "Needs Review";
+export type DocQuality = "Excellent" | "Good" | "Needs Review";
 
-type ArchiveItem = {
+export type ArchiveItem = {
   id: string;
   supplier?: string;
   invoiceNo?: string;
@@ -28,7 +28,7 @@ type ArchiveItem = {
   quality: DocQuality;
 };
 
-type FieldType = "string" | "number" | "integer" | "boolean";
+export type FieldType = "string" | "number" | "integer" | "boolean";
 
 const TYPE_LABELS: Record<FieldType, string> = {
   string: "Text",
@@ -37,7 +37,7 @@ const TYPE_LABELS: Record<FieldType, string> = {
   boolean: "Yes/No",
 };
 
-type FieldDef = {
+export type FieldDef = {
   name: string;
   type: FieldType;
   description?: string;
@@ -45,7 +45,7 @@ type FieldDef = {
   enum?: string[];
 };
 
-type DocTypeDef = {
+export type DocTypeDef = {
   id: string;
   name: string;
   prompt: string;
@@ -83,7 +83,7 @@ function schemaFromFields(fields: FieldDef[]) {
   };
 }
 
-export function OCRPage() {
+export function OCRPage({ onOpenDetail }: { onOpenDetail: (type: DocTypeDef) => void }) {
   const [step, setStep] = useState<Step>("dashboard");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [docTypes, setDocTypes] = useState<DocTypeDef[]>([
@@ -480,7 +480,7 @@ export function OCRPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedTypeId(t.id);
-                          setStep("detail");
+                          onOpenDetail(t);
                         }}
                         className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center justify-center gap-2"
                       >
@@ -516,7 +516,7 @@ export function OCRPage() {
                 const items = filteredItems(t);
                 const success = percentForQuality(items);
                 return (
-                  <div key={t.id} onClick={() => { setSelectedTypeId(t.id); setStep("detail"); }} className="grid grid-cols-12 gap-2 px-4 py-3 items-center cursor-pointer hover:bg-gray-100/50 dark:hover:bg-[#312F2F]/50">
+                  <div key={t.id} onClick={() => { setSelectedTypeId(t.id); onOpenDetail(t); }} className="grid grid-cols-12 gap-2 px-4 py-3 items-center cursor-pointer hover:bg-gray-100/50 dark:hover:bg-[#312F2F]/50">
                     <div className="col-span-4">
                       <div className="font-semibold text-sm">{t.name}</div>
                       <div className="text-[11px] text-[#767876] line-clamp-1">{t.prompt || "No prompt"}</div>
@@ -532,7 +532,7 @@ export function OCRPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedTypeId(t.id);
-                          setStep("detail");
+                          onOpenDetail(t);
                         }}
                         className="px-3 py-1.5 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-xs"
                       >
@@ -586,7 +586,7 @@ export function OCRPage() {
       </div>
 
       {/* Detail page */}
-      {step === "detail" && (
+      {false && (
         <div className="flex-1 overflow-auto p-4">
           <div className="max-w-6xl mx-auto space-y-4">
             <div className="flex items-center justify-between">
