@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleDashed, Download, FileText, Filter, History, Loader2, Plus, Search, Trash2 } from "lucide-react";
 
-type DocType = "Rechnung" | "Vertrag" | "Lieferschein" | "Benutzerdefiniert";
+type DocType = "Invoice" | "Contract" | "Delivery Note" | "Custom";
 
 type ExtractedField = {
   key: string;
@@ -29,21 +29,21 @@ export function OCRPage() {
     | "analytics"
   >("intro");
 
-  const [docType, setDocType] = useState<DocType>("Rechnung");
+  const [docType, setDocType] = useState<DocType>("Invoice");
   const [fields, setFields] = useState<string[]>([
-    "Rechnungsnummer",
-    "Betrag",
-    "Datum",
-    "Lieferant",
+    "Invoice number",
+    "Amount",
+    "Date",
+    "Supplier",
   ]);
   const [newField, setNewField] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
 
   const [extracted, setExtracted] = useState<ExtractedField[]>([
-    { key: "Rechnungsnummer", value: "RE-2024-001", confidence: 95 },
-    { key: "Betrag", value: "1.247,50 €", confidence: 92 },
-    { key: "Datum", value: "15.03.2024", confidence: 78 },
-    { key: "Lieferant", value: "Müller & Co", confidence: 45 },
+    { key: "Invoice number", value: "RE-2024-001", confidence: 95 },
+    { key: "Amount", value: "1.247,50 €", confidence: 92 },
+    { key: "Date", value: "15.03.2024", confidence: 78 },
+    { key: "Supplier", value: "Müller & Co", confidence: 45 },
   ]);
 
   const [learningNote, setLearningNote] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export function OCRPage() {
   const [archive, setArchive] = useState<ArchiveItem[]>([
     {
       id: "DOC-2001",
-      type: "Rechnung",
+      type: "Invoice",
       supplier: "Müller & Partner GmbH",
       invoiceNo: "RE-2024-001",
       date: "15.03.2024",
@@ -60,14 +60,14 @@ export function OCRPage() {
     },
     {
       id: "DOC-2002",
-      type: "Vertrag",
+      type: "Contract",
       supplier: "Alpha Consulting",
       date: "01.02.2024",
       quality: "Good",
     },
     {
       id: "DOC-2003",
-      type: "Lieferschein",
+      type: "Delivery Note",
       supplier: "Beta Supplies",
       date: "28.02.2024",
       quality: "Needs Review",
@@ -75,7 +75,7 @@ export function OCRPage() {
   ]);
 
   const [archiveFilter, setArchiveFilter] = useState<string>("");
-  const [qualityFilter, setQualityFilter] = useState<ArchiveItem["quality"] | "Alle">("Alle");
+  const [qualityFilter, setQualityFilter] = useState<ArchiveItem["quality"] | "All">("All");
 
   useEffect(() => {
     if (step === "processing") {
@@ -106,7 +106,7 @@ export function OCRPage() {
     setExtracted((prev) =>
       prev.map((f) => (f.key === key ? { ...f, value, confidence: Math.min(100, Math.max(85, f.confidence + 5)) } : f))
     );
-    setLearningNote("Danke! Das System lernt aus Ihrer Korrektur");
+    setLearningNote("Thanks! The system learns from your correction");
     const t = setTimeout(() => setLearningNote(null), 2000);
     return () => clearTimeout(t);
   };
@@ -120,14 +120,14 @@ export function OCRPage() {
   };
 
   const downloadCSV = () => {
-    const header = ["Feld", "Wert", "Konfidenz"]; 
+    const header = ["Field", "Value", "Confidence"]; 
     const rows = extracted.map((f) => [f.key, f.value, `${f.confidence}%`]);
     const csv = [header, ...rows].map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `export_${fileName || "dokument"}.csv`;
+    a.download = `export_${fileName || "document"}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -138,7 +138,7 @@ export function OCRPage() {
     const matchesText = archiveFilter
       ? [it.id, it.supplier, it.invoiceNo, it.date, it.amount].filter(Boolean).join(" ").toLowerCase().includes(archiveFilter.toLowerCase())
       : true;
-    const matchesQuality = qualityFilter === "Alle" ? true : it.quality === qualityFilter;
+    const matchesQuality = qualityFilter === "All" ? true : it.quality === qualityFilter;
     return matchesText && matchesQuality;
   });
 
@@ -149,17 +149,17 @@ export function OCRPage() {
         <div className="flex items-center space-x-3">
           <div className="p-2 rounded-lg bg-gray-200 dark:bg-[#312F2F]"><FileText size={20} className="text-[#1F1D1D] dark:text-white" /></div>
           <div>
-            <h1 className="text-xl font-semibold">Dokumente verarbeiten</h1>
-            <p className="text-xs text-[#767876]">Laden Sie Dokumente hoch und extrahieren Sie automatisch strukturierte Daten</p>
+            <h1 className="text-xl font-semibold">Process Documents</h1>
+            <p className="text-xs text-[#767876]">Upload documents and automatically extract structured data</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <button onClick={() => setStep("archive")} className="px-3 py-2 text-xs rounded-full bg-gray-200 dark:bg-[#312F2F] flex items-center space-x-2">
             <History size={16} />
-            <span>Archiv</span>
+            <span>Archive</span>
           </button>
           <button onClick={() => setStep("analytics")} className="px-3 py-2 text-xs rounded-full bg-gray-200 dark:bg-[#312F2F]">
-            Überblick
+            Overview
           </button>
         </div>
       </div>
@@ -167,14 +167,74 @@ export function OCRPage() {
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-auto p-4">
         {step === "intro" && (
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold mb-2">Schnellstart</h2>
-              <p className="text-sm text-[#767876]">Unterstützte Typen: Rechnungen, Verträge, Lieferscheine</p>
+          <div className="max-w-5xl mx-auto">
+            {/* Quick start */}
+            <div className="text-center mb-6">
+              <div className="mb-3">
+                <h2 className="text-2xl font-semibold mb-2">Quick Start</h2>
+                <p className="text-sm text-[#767876]">Supported types: Invoices, Contracts, Delivery notes</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
+                <p className="text-sm mb-4">Start with your first document.</p>
+                <button onClick={() => setStep("setup")} className="px-6 py-3 rounded-full bg-[#322F2F]/90 text-white font-semibold">Upload first document</button>
+              </div>
             </div>
-            <div className="p-6 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <p className="text-sm mb-4">Starten Sie mit Ihrem ersten Dokument.</p>
-              <button onClick={() => setStep("setup")} className="px-6 py-3 rounded-full bg-[#322F2F]/90 text-white font-semibold">Erstes Dokument hochladen</button>
+
+            {/* Archive preview on entry screen */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Archive</h3>
+              </div>
+
+              {/* Filters */}
+              <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-4 w-4 text-white/60" />
+                    </div>
+                    <input value={archiveFilter} onChange={(e) => setArchiveFilter(e.target.value)} placeholder="Search supplier, number, date..." className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#543639]/48 rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60" />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Filter size={18} />
+                    <select value={qualityFilter} onChange={(e) => setQualityFilter(e.target.value as any)} className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm">
+                      <option>All</option>
+                      <option>Excellent</option>
+                      <option>Good</option>
+                      <option>Needs Review</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredArchive.map((it) => (
+                  <div key={it.id} className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-semibold">{it.id}</div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        it.quality === "Excellent"
+                          ? "bg-[#00FF38] text-black"
+                          : it.quality === "Good"
+                          ? "bg-yellow-400 text-black"
+                          : "bg-red-400 text-white"
+                      }`}>{it.quality}</span>
+                    </div>
+                    <div className="text-xs text-[#767876] space-y-1">
+                      <div>Type: {it.type}</div>
+                      {it.invoiceNo && <div>Invoice no.: {it.invoiceNo}</div>}
+                      {it.supplier && <div>Supplier: {it.supplier}</div>}
+                      {it.amount && <div>Amount: {it.amount}</div>}
+                      {it.date && <div>Date: {it.date}</div>}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <button className="px-3 py-1 rounded-full bg-[#322F2F]/90 text-white text-xs" onClick={() => setStep("review")}>View</button>
+                      <button className="text-red-400" onClick={() => setArchive((p) => p.filter((x) => x.id !== it.id))}><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -183,9 +243,9 @@ export function OCRPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Doc type */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <h3 className="font-semibold mb-3">Dokumenttyp wählen</h3>
+              <h3 className="font-semibold mb-3">Choose document type</h3>
               <div className="space-y-2">
-                {(["Rechnung", "Vertrag", "Lieferschein", "Benutzerdefiniert"] as DocType[]).map((t) => (
+                {(["Invoice", "Contract", "Delivery Note", "Custom"] as DocType[]).map((t) => (
                   <label key={t} className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${docType === t ? "bg-black/10 dark:bg-black/40" : ""}`}>
                     <span className="text-sm">{t}</span>
                     <input type="radio" name="doctype" checked={docType === t} onChange={() => setDocType(t)} />
@@ -195,27 +255,27 @@ export function OCRPage() {
             </div>
             {/* Fields */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F] lg:col-span-2">
-              <h3 className="font-semibold mb-3">Felder definieren</h3>
+              <h3 className="font-semibold mb-3">Define fields</h3>
               <div className="flex flex-wrap gap-2 mb-3">
                 {fields.map((f) => (
                   <span key={f} className="px-3 py-1 rounded-full bg-black/10 dark:bg-black/40 text-xs">{f}</span>
                 ))}
               </div>
               <div className="flex items-center space-x-2">
-                <input value={newField} onChange={(e) => setNewField(e.target.value)} placeholder="Weiteres Feld hinzufügen" className="flex-1 px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm" />
-                <button onClick={addField} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center space-x-1"><Plus size={16} /><span>Hinzufügen</span></button>
+                <input value={newField} onChange={(e) => setNewField(e.target.value)} placeholder="Add another field" className="flex-1 px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm" />
+                <button onClick={addField} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center space-x-1"><Plus size={16} /><span>Add</span></button>
               </div>
             </div>
             {/* Upload */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F] lg:col-span-3">
-              <h3 className="font-semibold mb-3">Erstes Dokument</h3>
+              <h3 className="font-semibold mb-3">First document</h3>
               <div className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F]">
                 <div className="flex items-center space-x-3">
                   <FileText />
-                  <span className="text-sm">{fileName || "Keine Datei ausgewählt"}</span>
+                  <span className="text-sm">{fileName || "No file selected"}</span>
                 </div>
                 <label className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm cursor-pointer">
-                  Datei wählen
+                  Choose file
                   <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFile(f);
@@ -229,7 +289,7 @@ export function OCRPage() {
         {step === "processing" && (
           <div className="max-w-3xl mx-auto p-6 rounded-2xl bg-gray-200 dark:bg-[#312F2F] text-center">
             <div className="flex items-center justify-center mb-4"><Loader2 className="animate-spin" /></div>
-            <p className="text-sm">Dokument wird analysiert...</p>
+            <p className="text-sm">Analyzing document...</p>
             <div className="h-2 mt-4 rounded-full bg-black/10 dark:bg-black/40 overflow-hidden">
               <div className="h-full w-1/2 bg-[#00FF38] animate-pulse" />
             </div>
@@ -241,18 +301,18 @@ export function OCRPage() {
             {/* PDF preview placeholder */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F] min-h-[420px] flex items-center justify-center">
               <div className="text-center">
-                <div className="mb-2 text-sm text-[#767876]">Originaldokument</div>
+                <div className="mb-2 text-sm text-[#767876]">Original document</div>
                 <div className="w-72 h-96 bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] rounded-lg flex items-center justify-center">
                   <FileText className="text-[#767876]" />
                 </div>
-                <div className="mt-3 text-xs text-[#767876]">{fileName || "Dokument.pdf"}</div>
+                <div className="mt-3 text-xs text-[#767876]">{fileName || "document.pdf"}</div>
               </div>
             </div>
 
             {/* Extracted fields */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Extrahierte Daten</h3>
+                <h3 className="font-semibold">Extracted data</h3>
                 <div className={`px-3 py-1 rounded-full text-xs ${overallQuality.cls}`}>{overallQuality.label}</div>
               </div>
               <div className="space-y-3">
@@ -283,9 +343,9 @@ export function OCRPage() {
               <div className="mt-4 flex items-center space-x-2">
                 <button onClick={downloadCSV} className="px-4 py-2 rounded-full bg-[#00FF38] text-black text-sm font-semibold flex items-center space-x-2">
                   <Download size={16} />
-                  <span>Nach CSV exportieren</span>
+                  <span>Export to CSV</span>
                 </button>
-                <button onClick={() => setStep("archive")} className="px-4 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Zum Archiv</button>
+                <button onClick={() => setStep("archive")} className="px-4 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Go to archive</button>
               </div>
             </div>
           </div>
@@ -300,12 +360,12 @@ export function OCRPage() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-white/60" />
                   </div>
-                  <input value={archiveFilter} onChange={(e) => setArchiveFilter(e.target.value)} placeholder="Suchen nach Lieferant, Nr., Datum..." className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#543639]/48 rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60" />
+                  <input value={archiveFilter} onChange={(e) => setArchiveFilter(e.target.value)} placeholder="Search supplier, number, date..." className="w-full pl-10 pr-4 py-2.5 bg-gray-200 dark:bg-[#543639]/48 rounded-full border-none outline-none text-[#1F1D1D]/60 dark:text-white/60 text-xs placeholder-black/60 dark:placeholder-white/60" />
                 </div>
                 <div className="flex items-center space-x-2">
                   <Filter size={18} />
                   <select value={qualityFilter} onChange={(e) => setQualityFilter(e.target.value as any)} className="px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm">
-                    <option>Alle</option>
+                    <option>All</option>
                     <option>Excellent</option>
                     <option>Good</option>
                     <option>Needs Review</option>
@@ -329,14 +389,14 @@ export function OCRPage() {
                     }`}>{it.quality}</span>
                   </div>
                   <div className="text-xs text-[#767876] space-y-1">
-                    <div>Typ: {it.type}</div>
-                    {it.invoiceNo && <div>Rechnungsnummer: {it.invoiceNo}</div>}
-                    {it.supplier && <div>Lieferant: {it.supplier}</div>}
-                    {it.amount && <div>Betrag: {it.amount}</div>}
-                    {it.date && <div>Datum: {it.date}</div>}
+                    <div>Type: {it.type}</div>
+                    {it.invoiceNo && <div>Invoice no.: {it.invoiceNo}</div>}
+                    {it.supplier && <div>Supplier: {it.supplier}</div>}
+                    {it.amount && <div>Amount: {it.amount}</div>}
+                    {it.date && <div>Date: {it.date}</div>}
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <button className="px-3 py-1 rounded-full bg-[#322F2F]/90 text-white text-xs" onClick={() => setStep("review")}>Ansehen</button>
+                    <button className="px-3 py-1 rounded-full bg-[#322F2F]/90 text-white text-xs" onClick={() => setStep("review")}>View</button>
                     <button className="text-red-400" onClick={() => setArchive((p) => p.filter((x) => x.id !== it.id))}><Trash2 size={16} /></button>
                   </div>
                 </div>
@@ -349,32 +409,32 @@ export function OCRPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* KPIs */}
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <div className="text-xs text-[#767876] mb-1">Ihre Erfolgsrate</div>
+              <div className="text-xs text-[#767876] mb-1">Your success rate</div>
               <div className="text-2xl font-semibold">94%</div>
-              <div className="text-xs text-[#767876]">verbessert von 87%</div>
+              <div className="text-xs text-[#767876]">improved from 87%</div>
             </div>
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <div className="text-xs text-[#767876] mb-1">Verarbeitete Dokumente</div>
+              <div className="text-xs text-[#767876] mb-1">Processed documents</div>
               <div className="text-2xl font-semibold">200</div>
-              <div className="text-xs text-[#767876]">+24% im Vergleich zum Vormonat</div>
+              <div className="text-xs text-[#767876]">+24% vs previous month</div>
             </div>
             <div className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
-              <div className="text-xs text-[#767876] mb-1">Problematische Felder</div>
-              <div className="text-sm">Lieferantenadressen <span className="text-[#767876]">(68% Genauigkeit)</span></div>
+              <div className="text-xs text-[#767876] mb-1">Problematic fields</div>
+              <div className="text-sm">Supplier addresses <span className="text-[#767876]">(68% accuracy)</span></div>
             </div>
 
             {/* Suggestion */}
             <div className="md:col-span-3 p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F] flex items-start justify-between">
               <div>
-                <div className="font-semibold mb-1">Vorschlag</div>
-                <div className="text-sm text-[#767876]">Möchten Sie die Erkennung für Lieferanten verbessern?</div>
+                <div className="font-semibold mb-1">Suggestion</div>
+                <div className="text-sm text-[#767876]">Would you like to improve supplier recognition?</div>
               </div>
               <div className="flex items-center space-x-2">
                 <button className="px-3 py-2 rounded-full bg-[#00FF38] text-black text-sm font-semibold flex items-center space-x-2">
                   <CheckCircle2 size={16} />
-                  <span>Optimierung starten</span>
+                  <span>Start optimization</span>
                 </button>
-                <button className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm">Später</button>
+                <button className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm">Later</button>
               </div>
             </div>
           </div>
@@ -385,14 +445,14 @@ export function OCRPage() {
       <div className="border-t border-black/10 dark:border-[#312F2F] p-3 flex items-center justify-between">
         <div className="text-xs text-[#767876] flex items-center space-x-2">
           <CircleDashed size={14} />
-          <span>Schritt: {step}</span>
+          <span>Step: {step}</span>
         </div>
         <div className="flex items-center space-x-2">
           {step !== "intro" && step !== "processing" && (
-            <button onClick={() => setStep("intro")} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Zur Startseite</button>
+            <button onClick={() => setStep("intro")} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Back to start</button>
           )}
           {step === "review" && (
-            <button onClick={() => setStep("archive")} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Fertig</button>
+            <button onClick={() => setStep("archive")} className="px-3 py-2 rounded-full bg-gray-200 dark:bg-[#312F2F] text-sm">Done</button>
           )}
         </div>
       </div>

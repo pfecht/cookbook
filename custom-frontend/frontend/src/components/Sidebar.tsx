@@ -18,7 +18,7 @@ export function Sidebar({
 
   const navItems: { icon: any; label: string; key: Page }[] = [
     { icon: MessageSquare, label: "Chat", key: "chat" },
-    { icon: FileText, label: "Dokumente", key: "documents" },
+    { icon: FileText, label: "Documents", key: "documents" },
     { icon: Radar, label: "Radar", key: "radar" },
     { icon: Settings, label: "Settings", key: "settings" },
   ];
