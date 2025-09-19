@@ -83,7 +83,7 @@ function schemaFromFields(fields: FieldDef[]) {
   };
 }
 
-export function OCRPage({ onOpenDetail }: { onOpenDetail: (type: DocTypeDef) => void }) {
+export function OCRPage({ onOpenDetail, openEditorForTypeId, onEditorOpenHandled }: { onOpenDetail: (type: DocTypeDef) => void; openEditorForTypeId?: string | null; onEditorOpenHandled?: () => void }) {
   const [step, setStep] = useState<Step>("dashboard");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [docTypes, setDocTypes] = useState<DocTypeDef[]>([
@@ -251,6 +251,13 @@ export function OCRPage({ onOpenDetail }: { onOpenDetail: (type: DocTypeDef) => 
 
   const openEditor = (id: string) => setEditorTypeId(id);
   const closeEditor = () => setEditorTypeId(null);
+
+  useEffect(() => {
+    if (openEditorForTypeId) {
+      openEditor(openEditorForTypeId);
+      if (onEditorOpenHandled) onEditorOpenHandled();
+    }
+  }, [openEditorForTypeId]);
 
   const updateType = (id: string, patch: Partial<DocTypeDef>) => {
     setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, ...patch } : t)));
