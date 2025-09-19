@@ -151,6 +151,8 @@ export function OCRPage() {
   const [extracted, setExtracted] = useState<ExtractedField[]>([]);
 
   const [editorTypeId, setEditorTypeId] = useState<string | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadTypeId, setUploadTypeId] = useState<string>("invoice");
 
   const selectedType = useMemo(
     () => docTypes.find((t) => t.id === selectedTypeId) || docTypes[0],
@@ -312,7 +314,7 @@ export function OCRPage() {
       {/* Header */}
       <div className="border-b border-black/10 dark:border-[#312F2F] p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-gray-200 dark:bg-[#312F2F]">
+          <div className="p-2 rounded-lg bg-gray-100 dark:bg-[#312F2F] border border-black/10 dark:border-[#312F2F]">
             <FileText size={20} className="text-[#1F1D1D] dark:text-white" />
           </div>
           <div>
@@ -321,30 +323,10 @@ export function OCRPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="px-3 py-2 rounded-full bg-gray-100 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] flex items-center gap-2">
-            <FileText size={16} />
-            <select
-              className="bg-transparent outline-none text-sm"
-              value={selectedType?.id}
-              onChange={(e) => setSelectedTypeId(e.target.value)}
-            >
-              {docTypes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
           <button
             onClick={() => {
-              const el = document.createElement("input");
-              el.type = "file";
-              el.accept = "application/pdf,image/*";
-              el.onchange = (ev: any) => {
-                const file = ev.target.files?.[0];
-                if (file) handleStartUpload(file);
-              };
-              el.click();
+              setUploadTypeId(selectedTypeId || docTypes[0]?.id || "");
+              setShowUpload(true);
             }}
             className="px-3 py-2 rounded-full bg-gray-100 dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm flex items-center gap-2"
           >
@@ -668,6 +650,49 @@ export function OCRPage() {
                 >
                   <Download size={16} /> Export CSV
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload modal */}
+      {showUpload && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F]">
+            <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
+              <div className="font-semibold">Upload document</div>
+              <button className="text-[#767876]" onClick={() => setShowUpload(false)}><X size={18} /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="text-xs text-[#767876] mb-1">Document type</div>
+                <select
+                  value={uploadTypeId}
+                  onChange={(e) => setUploadTypeId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                >
+                  {docTypes.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="w-full flex items-center justify-center px-4 py-8 rounded-xl bg-gray-100 dark:bg-[#312F2F] border border-dashed border-black/20 dark:border-black/40 cursor-pointer text-sm">
+                  <div className="flex items-center gap-2"><Upload size={16} /> Choose file</div>
+                  <input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setShowUpload(false);
+                        handleStartUpload(f, uploadTypeId);
+                      }
+                    }}
+                  />
+                </label>
               </div>
             </div>
           </div>
