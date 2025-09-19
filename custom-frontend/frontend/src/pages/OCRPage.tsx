@@ -26,10 +26,21 @@ type ArchiveItem = {
   quality: DocQuality;
 };
 
+type FieldType = "string" | "number" | "integer" | "boolean";
+
+type FieldDef = {
+  name: string;
+  type: FieldType;
+  description?: string;
+  required: boolean;
+  enum?: string[];
+};
+
 type DocTypeDef = {
   id: string;
   name: string;
-  fields: string[];
+  prompt: string;
+  fields: FieldDef[];
   items: ArchiveItem[];
 };
 
@@ -43,13 +54,37 @@ function percentForQuality(items: ArchiveItem[]): number {
   return Math.round((good / items.length) * 100);
 }
 
+function schemaFromFields(fields: FieldDef[]) {
+  const required = fields.filter((f) => f.required).map((f) => f.name);
+  const properties: Record<string, any> = {};
+  for (const f of fields) {
+    const base: any = { type: f.type };
+    if (f.description) base.description = f.description;
+    if (f.enum && f.enum.length && f.type === "string") base.enum = f.enum;
+    properties[f.name] = base;
+  }
+  return {
+    type: "object",
+    properties,
+    ...(required.length ? { required } : {}),
+    additionalProperties: false,
+  };
+}
+
 export function OCRPage() {
   const [step, setStep] = useState<Step>("dashboard");
   const [docTypes, setDocTypes] = useState<DocTypeDef[]>([
     {
       id: "invoice",
       name: "Invoice",
-      fields: ["Invoice number", "Amount", "Date", "Supplier"],
+      prompt:
+        "Extract invoice data with high accuracy. Return invoice_number, amount, date, supplier as defined in the schema.",
+      fields: [
+        { name: "Invoice number", type: "string", required: true, description: "Invoice identifier" },
+        { name: "Amount", type: "string", required: true, description: "Gross amount with currency" },
+        { name: "Date", type: "string", required: true, description: "Invoice date as DD.MM.YYYY" },
+        { name: "Supplier", type: "string", required: true, description: "Supplier name" },
+      ],
       items: [
         {
           id: "DOC-2001",
@@ -64,7 +99,12 @@ export function OCRPage() {
     {
       id: "contract",
       name: "Contract",
-      fields: ["Counterparty", "Start date", "End date"],
+      prompt: "Extract core contract metadata per schema.",
+      fields: [
+        { name: "Counterparty", type: "string", required: true },
+        { name: "Start date", type: "string", required: false },
+        { name: "End date", type: "string", required: false },
+      ],
       items: [
         {
           id: "DOC-2002",
@@ -77,7 +117,12 @@ export function OCRPage() {
     {
       id: "delivery",
       name: "Delivery Note",
-      fields: ["Delivery no.", "Date", "Supplier"],
+      prompt: "Extract delivery slip details per schema.",
+      fields: [
+        { name: "Delivery no.", type: "string", required: true },
+        { name: "Date", type: "string", required: true },
+        { name: "Supplier", type: "string", required: false },
+      ],
       items: [
         {
           id: "DOC-2003",
@@ -96,7 +141,8 @@ export function OCRPage() {
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [modalTypeId, setModalTypeId] = useState<string | null>(null);
   const [newTypeName, setNewTypeName] = useState("");
-  const [newFieldName, setNewFieldName] = useState("");
+  const [newTypePrompt, setNewTypePrompt] = useState("");
+  const [fieldDraft, setFieldDraft] = useState<{ name: string; type: FieldType; required: boolean; description: string; enumText: string }>({ name: "", type: "string", required: true, description: "", enumText: "" });
   const [search, setSearch] = useState("");
   const [qualityFilter, setQualityFilter] = useState<DocQuality | "All">("All");
 
@@ -118,7 +164,7 @@ export function OCRPage() {
     if (!t) return;
     setSelectedTypeId(tId);
     setFileName(file.name);
-    setExtracted(t.fields.map((f) => ({ key: f, value: "", confidence: 65 })));
+    setExtracted(t.fields.map((f) => ({ key: f.name, value: "", confidence: 65 })));
     setStep("processing");
   };
 
@@ -176,10 +222,10 @@ export function OCRPage() {
     if (!name) return;
     const id = name.toLowerCase().replace(/\s+/g, "-");
     if (docTypes.some((d) => d.id === id)) return;
-    setDocTypes((p) => [{ id, name, fields: [], items: [] }, ...p]);
+    setDocTypes((p) => [{ id, name, prompt: newTypePrompt.trim(), fields: [], items: [] }, ...p]);
     setNewTypeName("");
+    setNewTypePrompt("");
     setModalTypeId(id);
-    setShowTypeModal(true);
   };
 
   const deleteDocType = (id: string) => {
@@ -194,29 +240,57 @@ export function OCRPage() {
   };
 
   const addFieldToType = () => {
-    const f = newFieldName.trim();
-    if (!f || !modalTypeId) return;
+    if (!modalTypeId) return;
+    const name = fieldDraft.name.trim();
+    if (!name) return;
     setDocTypes((p) =>
-      p.map((t) => (t.id === modalTypeId && !t.fields.includes(f) ? { ...t, fields: [...t.fields, f] } : t))
+      p.map((t) =>
+        t.id === modalTypeId && !t.fields.find((f) => f.name === name)
+          ? {
+              ...t,
+              fields: [
+                ...t.fields,
+                {
+                  name,
+                  type: fieldDraft.type,
+                  required: fieldDraft.required,
+                  description: fieldDraft.description.trim() || undefined,
+                  enum: fieldDraft.enumText
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                },
+              ],
+            }
+          : t
+      )
     );
-    setNewFieldName("");
+    setFieldDraft({ name: "", type: "string", required: true, description: "", enumText: "" });
   };
 
-  const renameField = (oldName: string, newName: string) => {
-    const n = newName.trim();
-    if (!n || !modalTypeId) return;
+  const updateFieldAt = (index: number, patch: Partial<FieldDef>) => {
+    if (!modalTypeId) return;
     setDocTypes((p) =>
       p.map((t) =>
         t.id === modalTypeId
-          ? { ...t, fields: t.fields.map((fn) => (fn === oldName ? n : fn)) }
+          ? {
+              ...t,
+              fields: t.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)),
+            }
           : t
       )
     );
   };
 
-  const removeField = (name: string) => {
+  const removeFieldAt = (index: number) => {
     if (!modalTypeId) return;
-    setDocTypes((p) => p.map((t) => (t.id === modalTypeId ? { ...t, fields: t.fields.filter((f) => f !== name) } : t)));
+    setDocTypes((p) =>
+      p.map((t) => (t.id === modalTypeId ? { ...t, fields: t.fields.filter((_, i) => i !== index) } : t))
+    );
+  };
+
+  const updatePrompt = (id: string, prompt: string) => {
+    setDocTypes((p) => p.map((t) => (t.id === id ? { ...t, prompt } : t)));
   };
 
   const filteredItems = (t: DocTypeDef) =>
@@ -249,6 +323,7 @@ export function OCRPage() {
           <button
             onClick={() => {
               setNewTypeName("");
+              setNewTypePrompt("");
               setModalTypeId(null);
               setShowTypeModal(true);
             }}
@@ -341,6 +416,7 @@ export function OCRPage() {
                 <button
                   onClick={() => {
                     setNewTypeName("");
+                    setNewTypePrompt("");
                     setModalTypeId(null);
                     setShowTypeModal(true);
                   }}
@@ -354,6 +430,7 @@ export function OCRPage() {
             {docTypes.map((t) => {
               const items = filteredItems(t);
               const success = percentForQuality(items);
+              const schemaPreview = JSON.stringify(schemaFromFields(t.fields), null, 2);
               return (
                 <div key={t.id} className="p-4 rounded-2xl bg-gray-200 dark:bg-[#312F2F]">
                   <div className="flex items-start justify-between">
@@ -376,6 +453,20 @@ export function OCRPage() {
                     <div className="px-2 py-1 rounded-full text-xs bg-[#00FF38] text-black font-semibold">{success}% OK</div>
                     <div className="px-2 py-1 rounded-full text-xs bg-yellow-400 text-black">{items.filter((i) => i.quality === "Good").length} good</div>
                     <div className="px-2 py-1 rounded-full text-xs bg-red-400 text-white">{items.filter((i) => i.quality === "Needs Review").length} review</div>
+                  </div>
+
+                  {t.prompt ? (
+                    <div className="mt-3 text-xs text-[#767876] line-clamp-2">{t.prompt}</div>
+                  ) : (
+                    <div className="mt-3 text-xs text-[#767876] italic">No prompt yet</div>
+                  )}
+
+                  {/* Schema preview */}
+                  <div className="mt-3 rounded-lg bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] p-2">
+                    <div className="text-[11px] text-[#767876] mb-1">Schema</div>
+                    <pre className="text-[11px] overflow-auto max-h-24">
+{schemaPreview}
+</pre>
                   </div>
 
                   {/* Recent items */}
@@ -616,25 +707,36 @@ export function OCRPage() {
         </div>
       )}
 
-      {/* Fields modal */}
+      {/* Fields & Prompt modal */}
       {showTypeModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F]">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F]">
             <div className="p-4 border-b border-black/10 dark:border-[#312F2F] flex items-center justify-between">
               <div className="font-semibold text-lg">{modalTypeId ? "Edit document type" : "Add document type"}</div>
               <button className="text-[#767876]" onClick={() => setShowTypeModal(false)}><X size={18} /></button>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-5">
               {!modalTypeId && (
-                <div>
-                  <label className="text-xs text-[#767876]">Name</label>
-                  <input
-                    value={newTypeName}
-                    onChange={(e) => setNewTypeName(e.target.value)}
-                    placeholder="e.g. Purchase Order"
-                    className="mt-1 w-full px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
-                  />
-                  <div className="mt-3">
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-[#767876]">Name</label>
+                    <input
+                      value={newTypeName}
+                      onChange={(e) => setNewTypeName(e.target.value)}
+                      placeholder="e.g. Purchase Order"
+                      className="mt-1 w-full px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#767876]">Prompt</label>
+                    <textarea
+                      value={newTypePrompt}
+                      onChange={(e) => setNewTypePrompt(e.target.value)}
+                      placeholder="Describe how the AI should extract the fields defined in the schema..."
+                      className="mt-1 w-full min-h-40 px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
+                    />
+                  </div>
+                  <div className="pt-1">
                     <button onClick={addDocType} className="px-4 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
                       <Plus size={16} /> Create type
                     </button>
@@ -643,17 +745,15 @@ export function OCRPage() {
               )}
 
               {modalTypeId && (
-                <div>
-                  <div className="mb-2 text-sm text-[#767876]">Fields for this type</div>
-                  <TypeFieldsEditor
-                    typeDef={docTypes.find((t) => t.id === modalTypeId)!}
-                    onAdd={addFieldToType}
-                    onRename={renameField}
-                    onRemove={removeField}
-                    newFieldName={newFieldName}
-                    setNewFieldName={setNewFieldName}
-                  />
-                </div>
+                <TypeEditor
+                  typeDef={docTypes.find((t) => t.id === modalTypeId)!}
+                  onPromptChange={(p) => updatePrompt(modalTypeId!, p)}
+                  fieldDraft={fieldDraft}
+                  setFieldDraft={setFieldDraft}
+                  onAddField={addFieldToType}
+                  onUpdateField={updateFieldAt}
+                  onRemoveField={removeFieldAt}
+                />
               )}
             </div>
           </div>
@@ -663,81 +763,144 @@ export function OCRPage() {
   );
 }
 
-function TypeFieldsEditor({
+function TypeEditor({
   typeDef,
-  onAdd,
-  onRename,
-  onRemove,
-  newFieldName,
-  setNewFieldName,
+  onPromptChange,
+  fieldDraft,
+  setFieldDraft,
+  onAddField,
+  onUpdateField,
+  onRemoveField,
 }: {
   typeDef: DocTypeDef;
-  onAdd: () => void;
-  onRename: (oldName: string, newName: string) => void;
-  onRemove: (name: string) => void;
-  newFieldName: string;
-  setNewFieldName: (v: string) => void;
+  onPromptChange: (p: string) => void;
+  fieldDraft: { name: string; type: FieldType; required: boolean; description: string; enumText: string };
+  setFieldDraft: (v: { name: string; type: FieldType; required: boolean; description: string; enumText: string }) => void;
+  onAddField: () => void;
+  onUpdateField: (index: number, patch: Partial<FieldDef>) => void;
+  onRemoveField: (index: number) => void;
 }) {
-  const [editing, setEditing] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
+  const schemaPreview = JSON.stringify(schemaFromFields(typeDef.fields), null, 2);
 
   return (
-    <div>
-      <div className="flex flex-wrap gap-2 mb-3">
-        {typeDef.fields.map((f) => (
-          <div key={f} className="px-3 py-1 rounded-full bg-black/10 dark:bg-black/40 text-xs flex items-center gap-2">
-            {editing === f ? (
+    <div className="space-y-4">
+      <div>
+        <div className="text-xs text-[#767876] mb-1">Prompt</div>
+        <textarea
+          value={typeDef.prompt}
+          onChange={(e) => onPromptChange(e.target.value)}
+          placeholder="Describe how the AI should extract the fields defined in the schema..."
+          className="w-full min-h-40 px-3 py-2 rounded-md bg-gray-200 dark:bg-[#312F2F] text-sm"
+        />
+      </div>
+
+      {/* Fields table */}
+      <div>
+        <div className="text-xs text-[#767876] mb-2">Fields</div>
+        <div className="space-y-2">
+          {typeDef.fields.map((f, i) => (
+            <div key={`${f.name}-${i}`} className="p-3 rounded-lg bg-gray-200 dark:bg-[#312F2F] grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
               <input
-                className="bg-transparent outline-none text-xs"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    onRename(f, editValue);
-                    setEditing(null);
-                  }
-                }}
+                value={f.name}
+                onChange={(e) => onUpdateField(i, { name: e.target.value })}
+                placeholder="Field name"
+                className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               />
-            ) : (
-              <span>{f}</span>
-            )}
-            {editing === f ? (
-              <button
-                className="text-[#21FF5F]/93"
-                onClick={() => {
-                  onRename(f, editValue);
-                  setEditing(null);
-                }}
+              <select
+                value={f.type}
+                onChange={(e) => onUpdateField(i, { type: e.target.value as FieldType })}
+                className="px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
               >
-                Save
-              </button>
-            ) : (
-              <button
-                className="text-white/80"
-                onClick={() => {
-                  setEditing(f);
-                  setEditValue(f);
-                }}
-              >
-                Edit
-              </button>
-            )}
-            <button className="text-red-400" onClick={() => onRemove(f)}>
-              <Trash2 size={14} />
+                <option value="string">string</option>
+                <option value="number">number</option>
+                <option value="integer">integer</option>
+                <option value="boolean">boolean</option>
+              </select>
+              <input
+                value={f.description || ""}
+                onChange={(e) => onUpdateField(i, { description: e.target.value })}
+                placeholder="Description"
+                className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+              />
+              <label className="flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={f.required}
+                  onChange={(e) => onUpdateField(i, { required: e.target.checked })}
+                />
+                Required
+              </label>
+              {f.type === "string" && (
+                <input
+                  value={(f.enum || []).join(", ")}
+                  onChange={(e) => onUpdateField(i, { enum: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                  placeholder="Enum (comma-separated)"
+                  className="md:col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+                />
+              )}
+              <div className="md:col-span-1 flex justify-end">
+                <button className="text-red-400" onClick={() => onRemoveField(i)}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add field row */}
+        <div className="mt-3 p-3 rounded-lg bg-gray-200 dark:bg-[#312F2F] grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
+          <input
+            value={fieldDraft.name}
+            onChange={(e) => setFieldDraft({ ...fieldDraft, name: e.target.value })}
+            placeholder="Field name"
+            className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+          />
+          <select
+            value={fieldDraft.type}
+            onChange={(e) => setFieldDraft({ ...fieldDraft, type: e.target.value as FieldType })}
+            className="px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+          >
+            <option value="string">string</option>
+            <option value="number">number</option>
+            <option value="integer">integer</option>
+            <option value="boolean">boolean</option>
+          </select>
+          <input
+            value={fieldDraft.description}
+            onChange={(e) => setFieldDraft({ ...fieldDraft, description: e.target.value })}
+            placeholder="Description"
+            className="md:col-span-2 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+          />
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={fieldDraft.required}
+              onChange={(e) => setFieldDraft({ ...fieldDraft, required: e.target.checked })}
+            />
+            Required
+          </label>
+          <input
+            value={fieldDraft.enumText}
+            onChange={(e) => setFieldDraft({ ...fieldDraft, enumText: e.target.value })}
+            placeholder="Enum (comma-separated)"
+            className="md:col-span-3 px-3 py-2 rounded-md bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
+          />
+          <div className="md:col-span-1 flex justify-end">
+            <button onClick={onAddField} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
+              <Plus size={16} /> Add
             </button>
           </div>
-        ))}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          value={newFieldName}
-          onChange={(e) => setNewFieldName(e.target.value)}
-          placeholder="Add new field"
-          className="flex-1 px-3 py-2 rounded-full bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] text-sm"
-        />
-        <button onClick={onAdd} className="px-3 py-2 rounded-full bg-[#322F2F]/90 text-white text-sm flex items-center gap-2">
-          <Plus size={16} /> Add
-        </button>
+
+      {/* Schema preview */}
+      <div>
+        <div className="text-xs text-[#767876] mb-1">JSON Schema (for OpenAI structured outputs)</div>
+        <div className="rounded-lg bg-white dark:bg-[#1F1D1D] border border-black/10 dark:border-[#312F2F] p-2">
+          <pre className="text-[11px] overflow-auto max-h-48">
+{schemaPreview}
+</pre>
+        </div>
       </div>
     </div>
   );
